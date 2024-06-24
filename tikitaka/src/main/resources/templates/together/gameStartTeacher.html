@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/swiper-bundle.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/teacher.css}">
+    <!-- <script src="http://code.jquery.com/jquery-latest.min.js"></script>-->
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <style>
+        body{
+            background: url("/static/images/together/summer3.jpg") no-repeat center center;
+            background-size: cover;
+            height: 100%;
+            width: 100%;
+        }
+        .btn-type-gray {
+            margin-bottom: 50px;
+            margin-right: 50px;
+        }
+    </style>
+</head>
+<body>
+<input id="roomNumber" type="hidden" th:value="${roomNumber}"/>
+<input id="userLength" type="hidden" th:value="${userLength}"/>
+<input id="users" type="hidden" th:value="${users}"/>
+<input id="readCount" type="hidden" th:value="${readCount}"/>
+<input id="quizIdx" type="hidden" th:value="${quizIdx}"/>
+
+<div class="wrap type2">
+    <header class="header">
+        <div class="header-title">
+            <div class="title-group">같이하기</div>
+            <div class="quiz-timer" style="display: none;"><i class="ic-clock2"></i>00:05</div>
+        </div>
+        <div class="quiz-fraction"><strong class="current">1</strong> / <span th:text="${readCount}"></span></div>
+    </header>
+    <main class="content-area">
+
+    </main>
+    <input type="hidden" id="list" th:value="${readTogetherDetailList}">
+    <div class="quiz-btn" style=" display: flex;
+            flex-direction: column;
+            align-items: center;">
+        <button type="button" class="btn-type-dark" id="answerBtn">
+            <span class="btn-txt">정답확인</span>
+        </button>
+        <button type="button" class="btn-type-dark" id="nextQuizBtn" style="display: none;">
+            <span class="btn-txt">다음문제</span>
+        </button>
+        <button type="button" class="btn-type-dark" id="resultBtn" style="display: none;">
+            <span class="btn-txt">퀴즈결과</span>
+        </button>
+    </div>
+    <div class="participate-btn">
+        <button type="button" class="btn-type-gray">
+            <span class="btn-txt open-dialog-state">참여자 현황 ( 0 / ${userLength} )</span>
+        </button>
+    </div>
+
+</div>
+
+<!-- S : 참여자 현황 -->
+<div title="참여자 현황" class="dialog-state">
+
+</div>
+<!-- S : 참여자 현황 -->
+<script>
+    $(window).on('beforeunload', function() {
+    return "이 페이지를 떠나면 작성 중인 내용이 사라질 수 있습니다.";
+});
+    window.addEventListener('keydown', function(event) {
+        if (event.key === 'F5' || (event.ctrlKey)) {
+            event.preventDefault();
+            swal("Oops!", "F5, Ctrl 키 조합은 사용할 수 없습니다!", "warning");
+        }
+    });
+
+    // 마우스 오른쪽 버튼 막기
+    window.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+        swal("Oops!", "마우스 오른쪽 버튼은 사용할 수 없습니다!", "warning");
+    });
+    const readTogetherDetailList = JSON.parse(document.querySelector("#list").value);
+
+    const roomNumber = document.querySelector("#roomNumber").value;
+    const userLength = document.querySelector("#userLength").value;
+    const usersInput = document.querySelector("#users").value;
+    const readCount = document.querySelector("#readCount").value;
+
+    const cleanedUsersInput = usersInput.replace(/[\[\]]/g, '');
+    const users = cleanedUsersInput.split(',').map(user => user.trim()).filter(user => user !== "");
+    // 참가자 목록 생성 함수
+    const userList = function() {
+        let userHtml = "";
+        for (let i = 1; i < users.length; i++) {
+            console.log(users[i]);
+            userHtml += `<option>${users[i]}</option>`;
+        }
+        return userHtml;
+    }
+
+    const htmlinner = `<button type="button" class="btn-type-gray" >
+            <span class="btn-txt open-dialog-state">참여자 현황 ( 0 / ${userLength} )</span>
+        </button>`;
+    $(".participate-btn").html(htmlinner);
+    const htmlSubmit = ` <div class="state-select">
+        <div class="select-c">
+            <select>
+                <option disabled selected>참여자 목록  ${userLength}명</option>
+                ${userList()}
+            </select>
+        </div>
+    </div>
+    <div class="flex-area">
+        <div class="flex-content">
+            <p class="state-title-a">학생이 정답을 제출 중 입니다.</p>
+            <p class="state-count">( <span class="state-value">0</span> / ${userLength} )</p>
+            <div class="state-student">
+                <div class="state-student-list">
+
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    let headerHtml = "";
+    headerHtml = `<div class="header-title">
+            <div class="title-group">같이하기</div>
+            <div class="quiz-timer"><i class="ic-clock2"></i>${readTogetherDetailList[0].timer}</div>
+        </div>
+        <div class="quiz-fraction"><strong class="current">1</strong> / <span th:text="">${readCount}</span></div>`;
+    $(".dialog-state").html(htmlSubmit);
+    //$(".header").html(headerHtml);
+    let num = 0;
+
+    $(document).ready(function () {
+
+
+        const socket = new SockJS('/websocket');
+        const stomp = Stomp.over(socket);
+        stomp.debug = null; // stomp 콘솔출력 X
+        // 구독을 취소하기위해 구독 시 아이디 저장
+        const subscribe = [];
+
+// 모든 구독 취소하기
+        const subscribeCancle = function () {
+            const length = subscribe.length;
+            for (let i = 0; i < length; i++) {
+                const sid = subscribe.pop();
+                stomp.unsubscribe(sid.id);
+            }
+        }
+
+
+// 메인 화면
+        const main = function () {
+            // 기존 구독 취소
+            subscribeCancle();
+            // 채팅 중이었던 방이 있을때
+            const room = chatingRoom();
+
+            if (room) {
+                return;
+            }
+
+            console.log("dasd" + readTogetherDetailList[0].category);
+            //시작 type에 따라 문제 유형 변경
+            let userHtml = "";
+            if (readTogetherDetailList[0].category === "short") {
+                userHtml = `
+                <div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                        <div class="answer-group">
+                            <div class="answer-item">
+                                <input type="text" name="answer" class="input-answer" placeholder="이 곳에 정답을 입력해주세요." maxlength="20">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+
+            } else if (readTogetherDetailList[0].category === "blank") {
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[0].blank.split('').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += ` <div class="blank-item">${users[i]}</div>`;
+                    }
+                    return forListHTML;
+                }
+
+                let mediaHtml = "";
+                if (readTogetherDetailList[0].media) {
+                    mediaHtml += `
+                    <img id="preview" src="${readTogetherDetailList[0].media}" onerror="this.src='/images/icon/ic-logo.png'" alt="" style="width: 300px;
+    height: 100%;">
+                `;
+                }
+
+                let youtubeHtml = "";
+                if (readTogetherDetailList[0].youtubeUrl) {
+                    youtubeHtml += `
+                    <iframe src="https://www.youtube.com/embed/${readTogetherDetailList[0].youtubeUrl}" style="width: 300px;
+    height: 100%;"></iframe>
+                `;
+                }
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        <div class="answer-group type2">
+                            <div class="blank-quiz">
+                                <div class="blank-group">
+                                     ${forList()}
+                                </div>
+                                    ${mediaHtml}
+                                    ${youtubeHtml}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>`;
+            } else if (readTogetherDetailList[0].category === "ox") {
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                        <div class="ox-area">
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-o" name="chk-ox">
+                                <label for="chk-o" class="radio-label-o">
+                                    <i class="ic-o"></i>
+                                    <span class="for-a11y">O</span>
+                                    <span class="desc">${readTogetherDetailList[0].ocomment}</span>
+                                </label>
+                            </span>
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-x" name="chk-ox">
+                                <label for="chk-x" class="radio-label-x">
+                                    <i class="ic-x"></i>
+                                    <span class="for-a11y">X</span>
+                                    <span class="desc">${readTogetherDetailList[0].xcomment}</span>
+                                </label>
+                            </span>
+                        </div>
+
+                    </div>
+                </div>`;
+            } else if (readTogetherDetailList[0].category === "desc") {
+                userHtml = `<div class="quiz-frame">
+                        <div class="quiz-area">
+                            <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                            <div class="answer-group">
+                                <div class="answer-item">
+                                    <textarea class="textarea-answer" placeholder="이 곳에 서술형 답변을 입력해 주세요."></textarea>
+                                </div>
+                            </div>
+                            <div class="quiz-btn">
+                                <button type="button" class="btn-type-dark">
+                                    <span class="btn-txt">정답확인</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (readTogetherDetailList[0].category === "mul") {
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[0].mulTitle.split(',').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += `<span class="choice-item">
+                            <input type="radio" class="choice-form" id="${choiceId}" name="chk-choice">
+                            <label for="${choiceId}" class="choice-label"><span class="number">${i + 1}.</span> ${users[i]}</label>
+                        </span>`;
+                    }
+                    return forListHTML;
+                }
+
+                userHtml = `<div class="quiz-frame">
+                        <div class="quiz-area">
+                            <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                            <div class="choice-group">
+                                 ${forList()}
+                            </div>
+
+                        </div>
+                    </div>`;
+            }
+            $(".content-area").html("");
+            $(".content-area").html(userHtml);
+            const roomNumber = document.querySelector("#roomNumber").value;
+            stomp.send("/pub/socket/first/" + roomNumber);
+        };
+
+
+        const info = (function () {
+            let nickname = "";
+            let roomNumber = "";
+
+            const getNickname = function () {
+                return nickname;
+            }
+
+            const setNickname = function (set) {
+                nickname = set;
+            }
+
+            const getRoomNumber = function () {
+                return roomNumber;
+            }
+
+            const setRoomNumber = function (set) {
+                roomNumber = set;
+            }
+            return {
+                getNickname: getNickname,
+                setNickname: setNickname,
+                getRoomNumber: getRoomNumber,
+                setRoomNumber: setRoomNumber,
+            }
+        })();
+
+        let answerCount = 0;
+
+
+// 채팅방 구독
+        const chatingConnect = function (roomNumber) {
+            // 기존 구독 취소
+            subscribeCancle();
+
+            const id1 = stomp.subscribe("/topic/submit/" + roomNumber, function (message) {
+                const submitMemberOn = message.body;
+                console.log("답안지 제출 들어옴.");
+                console.log("Member: " + submitMemberOn);
+
+                answerCount++;
+                submitStudentCount(answerCount, submitMemberOn);
+            })
+
+            subscribe.push(id1);
+
+        }
+
+        function submitStudentCount(answerCount , submitMemberOn) {
+            //메인 참가자 명단
+            const htmlinner = `<button type="button" class="btn-type-gray" >
+            <span class="btn-txt open-dialog-state">참여자 현황 ( ${answerCount} / ${userLength} )</span>
+            </button>`;
+            // 모달창 참가자 그리기
+            const htmlInner2 = `<div class="state-student-item">
+                        <div class="character-img color1">
+                            <img src="../../images/character/character1-2.png" alt="">
+                        </div>
+                        <p class="name">${submitMemberOn}</p>
+                    </div>`;
+            //상단바 참가자 그리기
+            const htmlInner3 = `( <span class="state-value"> ${answerCount}</span> / ${userLength} )`;
+
+            $(".participate-btn").html(htmlinner);
+            $(".state-student-list").append(htmlInner2);
+            $(".state-count").html(htmlInner3);
+
+        }
+        $(document).on("click", ".open-dialog-state", function(event) {
+            console.log('눌림');
+            $(".dialog-state").dialog("open");
+            $('html').addClass('no-scroll');
+            window.scrollTo({top: 0});
+            event.preventDefault();
+        });
+        document.querySelector("#answerBtn").addEventListener("click", () => {
+            let userHtml = "";
+            if (readTogetherDetailList[num].category === "short") {
+                userHtml = `
+            <div class="quiz-frame">
+            <div class="quiz-area">
+                <div class="quiz-title-group">
+                    <button type="button" class="btn-explain"><span class="btn-txt">해설</span></button>
+                    <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                </div>
+                <div class="answer-group">
+                    <div class="answer-item">
+                        <dl class="answer-result type-correct">
+                            <dt class="answer-title">정답</dt>
+                            <dd class="answer-value">${readTogetherDetailList[num].answer}</dd>
+                        </dl>
+                    </div>
+                    <div class="answer-item">
+                        <dl class="answer-result">
+                            <dt class="answer-title">내가 입력한 답</dt>
+                            <dd class="answer-value">
+
+                                <!--<i class="ic-answer-x"></i>-->
+
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="quiz-btn">
+
+                </div>
+            </div>
+        </div>
+            `;
+
+            } else if (readTogetherDetailList[num].category === "blank") {
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[num].blank.split('').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += ` <div class="blank-item">${users[i]}</div>`;
+                    }
+                    return forListHTML;
+                }
+
+                let mediaHtml = "";
+                if (readTogetherDetailList[num].media) {
+                    mediaHtml += `
+                    <img id="preview" src="${readTogetherDetailList[num].media}" onerror="this.src='/images/icon/ic-logo.png'" alt="" style="width: 300px;
+    height: 100%;">
+                `;
+                }
+
+                let youtubeHtml = "";
+                if (readTogetherDetailList[num].youtubeUrl) {
+                    youtubeHtml += `
+                    <iframe src="https://www.youtube.com/embed/${readTogetherDetailList[num].youtubeUrl}" style="width: 300px;
+    height: 100%;"></iframe>
+                `;
+                }
+                userHtml = `<div class="quiz-frame">
+            <div class="quiz-area">
+                <div class="quiz-title-group">
+                    <button type="button" class="btn-explain"><span class="btn-txt">해설</span></button>
+                    <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                </div>
+                <div class="answer-group type2">
+                    <div class="blank-quiz result">
+                        <div class="blank-group">
+                             ${forList()}
+                        </div>
+                        ${mediaHtml}
+                        ${youtubeHtml}
+
+                    </div>
+                    <div class="answer-item">
+                        <dl class="answer-result type-correct">
+                            <dt class="answer-title">정답</dt>
+                            <dd class="answer-value">${readTogetherDetailList[num].answer}</dd>
+                        </dl>
+                    </div>
+                    <div class="answer-item">
+                        <dl class="answer-result">
+                            <dt class="answer-title">내가 입력한 답</dt>
+                            <dd class="answer-value">
+                                <!--<i class="ic-answer-o"></i>-->
+
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="quiz-btn">
+
+                </div>
+            </div>
+        </div>`;
+            } else if (readTogetherDetailList[num].category === "ox") {
+                const answer = readTogetherDetailList[num].answer;
+                let oChecked = '';
+                let xChecked = '';
+
+                if (answer === 'o') {
+                    oChecked = 'checked';
+                } else if (answer === 'x') {
+                    xChecked = 'checked';
+                }
+
+                userHtml = `<div class="quiz-frame">
+                <div class="quiz-area">
+                    <div class="quiz-title-group">
+                        <button type="button" class="btn-explain open-dialog-explain"><span class="btn-txt">해설</span></button>
+                        <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                    </div>
+                    <div class="ox-area">
+                        <span class="ox-radio correct">
+                            <input type="radio" class="radio-form" id="chk-o" name="chk-ox"  ${oChecked} disabled>
+                            <label for="chk-o" class="radio-label-o">
+                                <i class="ic-o"></i>
+                                <span class="for-a11y">O</span>
+                                <span class="desc">${readTogetherDetailList[num].ocomment}</span>
+                            </label>
+                        </span>
+                        <span class="ox-radio">
+                            <input type="radio" class="radio-form" id="chk-x" name="chk-ox" ${xChecked} disabled>
+                            <label for="chk-x" class="radio-label-x">
+                                <i class="ic-x"></i>
+                                <span class="for-a11y">X</span>
+                                <span class="desc">${readTogetherDetailList[num].xcomment}</span>
+                            </label>
+                        </span>
+                    </div>
+                </div>
+            </div>`;
+            } else if (readTogetherDetailList[num].category === "desc") {
+
+                userHtml =`<div class="quiz-frame">
+                            <div class="quiz-area">
+                                <div class="quiz-title-group">
+                                    <button type="button" class="btn-explain open-dialog-explain"><span class="btn-txt">해설</span></button>
+                                    <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                                </div>
+                                <div class="answer-group">
+                                    <div class="answer-item">
+                                        <dl class="answer-result type-correct type-essay">
+                                            <dt class="answer-title">예시답안</dt>
+                                            <dd class="answer-value">${readTogetherDetailList[num].answer}</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+            } else if (readTogetherDetailList[num].category === "mul") {
+                function forList(num) {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[num].mulTitle.split(',').map(user => user.trim()).filter(user => user !== "");
+                    const correctAnswer = readTogetherDetailList[num].answer; // 정답 가져오기
+
+                    for (let i = 0; i < users.length; i++) {
+                        const choiceId = `choice${i + 1}`;
+                        // 정답과 일치하는 경우 disabled 속성을 제거하여 선택되도록 하고, 그렇지 않은 경우 disabled 속성을 추가하여 선택할 수 없도록 합니다.
+                        const labelHTML = (users[i] === correctAnswer) ?
+                            `<label for="${choiceId}" class="choice-label"><span class="number">${i + 1}.</span> ${users[i]}</label>` :
+                            `<label for="${choiceId}" class="choice-label" disabled><span class="number">${i + 1}.</span> ${users[i]}</label>`;
+
+                        forListHTML += `<span class="choice-item">
+                            <input type="radio" class="choice-form" id="${choiceId}" name="chk-choice" ${users[i] === correctAnswer ? 'checked' : ''} ${users[i] === correctAnswer ? '' : 'disabled'}>
+                            ${labelHTML}
+                        </span>`;
+                    }
+                    return forListHTML;
+                }
+
+                userHtml = `<div class="quiz-frame">
+                        <div class="quiz-area">
+                            <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                            <div class="choice-group">
+                                 ${forList(num)}
+                            </div>
+
+                        </div>
+                    </div>`;
+            }
+            $(".content-area").html("");
+            $(".content-area").html(userHtml);
+            const roomNumber = document.querySelector("#roomNumber").value;
+            const answerBtn = document.querySelector("#answerBtn").style.display = 'none';
+            const nextBtn = document.querySelector("#nextQuizBtn").style.display = 'block';
+            stomp.send("/pub/socket/next/" + roomNumber);
+            num++;
+            answerCount = 0;
+            console.log("num" + num + 're' + readCount);
+            if(readCount == num) {
+                const answerBtn = document.querySelector("#answerBtn").style.display = 'none';
+                const nextBtn = document.querySelector("#nextQuizBtn").style.display = 'none';
+                const resultBtn = document.querySelector("#resultBtn").style.display = 'block';
+            }
+        });
+
+        document.querySelector("#nextQuizBtn").addEventListener("click", () => {
+            const headHtml = num+1;
+
+            const htmlinner = `<button type="button" class="btn-type-gray" >
+            <span class="btn-txt open-dialog-state">참여자 현황 ( 0 / ${userLength} )</span>
+        </button>`;
+            $(".current").html(headHtml);
+            $(".participate-btn").html(htmlinner);
+            $(".state-student-list").html("");
+
+            $(".state-count").html(`( <span class="state-value">0</span> / ${userLength} )`);
+
+            let userHtml = "";
+            if (readTogetherDetailList[num].category === "short") {
+                userHtml = `
+                <div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        <div class="answer-group">
+                            <div class="answer-item">
+                                <input type="text" name="answer" class="input-answer" placeholder="이 곳에 정답을 입력해주세요." maxlength="20">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+            } else if (readTogetherDetailList[num].category === "blank") {
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[num].blank.split('').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += ` <div class="blank-item">${users[i]}</div>`;
+                    }
+                    return forListHTML;
+                }
+
+                let mediaHtml = "";
+                if (readTogetherDetailList[num].media) {
+                    mediaHtml += `
+                    <img id="preview" src="${readTogetherDetailList[num].media}" onerror="this.src='/images/icon/ic-logo.png'" alt="" style="width: 300px;
+            height: 100%;">
+                        `;
+                        }
+
+                        let youtubeHtml = "";
+                        if (readTogetherDetailList[num].youtubeUrl) {
+                            youtubeHtml += `
+                            <iframe src="https://www.youtube.com/embed/${readTogetherDetailList[num].youtubeUrl}" style="width: 300px;
+            height: 100%;"></iframe>
+                        `;
+                        }
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        <div class="answer-group type2">
+                            <div class="blank-quiz">
+                                <div class="blank-group">
+                                     ${forList()}
+                                </div>
+                                ${mediaHtml}
+                                ${youtubeHtml}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>`;
+            } else if (readTogetherDetailList[num].category === "ox") {
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        <div class="ox-area">
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-o" name="chk-ox">
+                                <label for="chk-o" class="radio-label-o">
+                                    <i class="ic-o"></i>
+                                    <span class="for-a11y">O</span>
+                                    <span class="desc">${readTogetherDetailList[num].ocomment}</span>
+                                </label>
+                            </span>
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-x" name="chk-ox">
+                                <label for="chk-x" class="radio-label-x">
+                                    <i class="ic-x"></i>
+                                    <span class="for-a11y">X</span>
+                                    <span class="desc">${readTogetherDetailList[num].xcomment}</span>
+                                </label>
+                            </span>
+                        </div>
+
+                    </div>
+                </div>`;
+            } else if (readTogetherDetailList[num].category === "desc") {
+                userHtml = `<div class="quiz-frame">
+                        <div class="quiz-area">
+                            <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                            <div class="answer-group">
+                                <div class="answer-item">
+                                    <textarea class="textarea-answer" placeholder="이 곳에 서술형 답변을 입력해 주세요."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (readTogetherDetailList[num].category === "mul") {
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[num].mulTitle.split(',').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += `<span class="choice-item">
+                            <input type="radio" class="choice-form" id="${choiceId}" name="chk-choice">
+                            <label for="${choiceId}" class="choice-label"><span class="number">${i + 1}.</span> ${users[i]}</label>
+                        </span>`;
+                    }
+                    return forListHTML;
+                }
+
+                userHtml = `<div class="quiz-frame">
+                        <div class="quiz-area">
+                            <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                            <div class="choice-group">
+                                 ${forList()}
+                            </div>
+
+                        </div>
+                    </div>`;
+            }
+            const answerBtn = document.querySelector("#answerBtn").style.display = 'block';
+            const nextBtn = document.querySelector("#nextQuizBtn").style.display = 'none';
+            $(".content-area").html("");
+            $(".content-area").html(userHtml);
+            const roomNumber = document.querySelector("#roomNumber").value;
+            stomp.send("/pub/socket/nextQuiz/" + roomNumber);
+        });
+
+        document.querySelector("#resultBtn").addEventListener("click", function () {
+            const quizIdx = document.querySelector("#quizIdx").value;
+            location.href = '/resultTeacher?roomNumber=' + roomNumber + '&readCount=' + userLength +'&quizIdx=' + quizIdx;
+        });
+//세팅
+        const initRoom = function (room, nickname) {
+            info.setNickname(nickname);
+            info.setRoomNumber(room.roomNumber);
+
+            $(".chat").show();
+            //(room.users);
+            chatingConnect(room.roomNumber);
+
+            $(".chat_input_area textarea").focus();
+        }
+
+
+// 대화 중이던 방
+        const chatingRoom = function () {
+            let returnRoom = null;
+
+            $.ajax({
+                url: "/chatingRoom",
+                type: "GET",
+                async: false,
+            })
+                .then(function (result) {
+                    if (result != "") {
+                        const room = result.chatingRoom;
+                        const nickname = result.myNickname;
+                        initRoom(room, nickname);
+                        returnRoom = result;
+                    }
+                })
+                .fail(function (result) {
+                    //errorMSG(result);
+                })
+
+            return returnRoom;
+        };
+        $(".select-c select").selectmenu();
+
+        $(".open-dialog-state").click(function (event) {
+            console.log('눌림');
+            $(".dialog-state").dialog("open");
+            $('html').addClass('no-scroll');
+            window.scrollTo({top: 0});
+            event.preventDefault();
+        });
+
+        $(".dialog-state").dialog({
+            autoOpen: false,
+            dialogClass: "full-type",
+            modal: true,
+            resizable: true,
+            close: function (event, ui) {
+                $('html').removeClass('no-scroll');
+            }
+        });
+        stomp.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            main();
+        });
+    }) // document.ready
+</script>
+</body>
+</html>

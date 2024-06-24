@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/swiper-bundle.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <!-- <script src="http://code.jquery.com/jquery-latest.min.js"></script>-->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <style>
+        body{
+            background: url("/static/images/together/summer3.jpg") no-repeat center center;
+            background-size: cover;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<input id="roomNumber" type="hidden" th:value="${roomNumber}" readonly/>
+<input id="nickname" type="hidden" th:value="${nickname}" readonly>
+<input id="character" type="hidden" th:value="${character}" readonly>
+<input id="readCount" type="hidden" th:value="${readCount}"/>
+<input type="hidden" id="list" th:value="${readTogetherDetailList}">
+<div class="wrap type2" >
+    <input type="hidden" th:value="${character}" id="img">
+    <header class="header">
+        <div class="header-title">
+            <div class="title-group">같이하기</div>
+            <div class="quiz-timer" style="display: none;"><i class="ic-clock2"></i>00:05</div>
+        </div>
+        <div class="quiz-fraction"><strong class="current">3</strong> / n</div>
+        <div class="header-util">
+            <div class="header-info">
+                 <span class="info-name">
+                    <i class="user-img color1"><img th:src="@{'../../images/character/' + ${character} + '.png'}" alt=""></i>
+                    <p th:text="${nickname}"></p>
+                </span>
+            </div>
+            <div class="header-btn-group">
+                <!--<button type="button" class="header-btn">
+                    <i class="ic-temp"></i>
+                    <span class="btn-txt">임시저장</span>
+                </button>-->
+            </div>
+        </div>
+    </header>
+    <main class="content-area">
+        <input type="text" class="input-answer" placeholder="이 곳에 정답을 입력해주세요." maxlength="20" style="display: none;">
+    </main>
+    <!-- 정답 -->
+    <div class="result-layer correct" id="co" style="display: none;">
+        <div class="motion-box" style="width: 45%;">
+            <div class="character"><img src="../../images/student/character-o.gif" alt=""></div>
+            <i class="ic-correct"></i>
+        </div>
+        <p class="result-title" style="text-align: center; font-size: 24px;">참 잘했어요! 짝짝짝</p>
+    </div>
+    <!-- 오답 -->
+    <div class="result-layer incorrect"  id="inco" style="display: none;">
+        <div class="motion-box" style="width: 45%;">
+            <div class="character"><img src="../../images/student/character-x.gif" alt=""></div>
+            <i class="ic-incorrect"></i>
+        </div>
+        <p class="result-title" style="text-align: center; font-size: 24px;">지치지 말고 고고!</p>
+    </div>
+    <div class="quiz-btn" style="display: flex;
+         flex-direction: column;
+         align-items: center; margin-bottom: 100px;">
+        <button type="button" class="btn-type-dark" id="submitBtn">
+            <span class="btn-txt" >정답제출</span>
+        </button>
+        <button type="button" class="btn-type-dark" id="resultBtn" style="display: none;">
+            <span class="btn-txt">퀴즈결과</span>
+        </button>
+        <button type="button" class="btn-type-dark" id="modifyBtn" style="display: none;">
+            <span class="btn-txt">정답수정</span>
+        </button>
+    </div>
+
+</div>
+<div title="해설" class="dialog-explain" style="display: none;">
+    <p class="explain-text">선생님은 봄 하면<br> 벚꽃이 생각나요!~</p>
+</div>
+<script>
+    $(window).on('beforeunload', function() {
+        return "이 페이지를 떠나면 작성 중인 내용이 사라질 수 있습니다.";
+    });
+    $(window).on('unload', function() {
+        window.location.href = "/";
+    });
+    window.addEventListener('keydown', function(event) {
+        if (event.key === 'F5' || (event.ctrlKey )) {
+            event.preventDefault();
+            swal("Oops!", "F5, Ctrl+Alt 키 조합은 사용할 수 없습니다!", "warning");
+        }
+    });
+
+    // 마우스 오른쪽 버튼 막기
+    window.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+        swal("Oops!", "마우스 오른쪽 버튼은 사용할 수 없습니다!", "warning");
+    });
+    const readTogetherDetailList = JSON.parse(document.querySelector("#list").value);
+    const readCount = document.querySelector("#readCount").value;
+
+    const roomNumber = document.querySelector("#roomNumber").value;
+    let num =0;
+
+    $(document).ready(function(){
+        const socket = new SockJS('/websocket');
+        const stomp = Stomp.over(socket);
+        stomp.debug = null; // stomp 콘솔출력 X
+// 구독을 취소하기위해 구독 시 아이디 저장
+        const subscribe = [];
+
+// 모든 구독 취소하기
+        const subscribeCancle = function() {
+            const length = subscribe.length;
+            for(let i=0;i<length;i++) {
+                const sid = subscribe.pop();
+                stomp.unsubscribe(sid.id);
+            }
+        }
+
+
+// 메인 화면
+        const main = function() {
+            //$("main").show();
+            // 기존 구독 취소
+            subscribeCancle();
+            // 채팅 중이었던 방이 있을때
+            const room = chatingRoom();
+
+            if(room) {
+                return;
+            }
+
+        };
+
+
+        const info = (function(){
+            let nickname = "";
+            let roomNumber = "";
+
+            const getNickname = function() {
+                return nickname;
+            }
+
+            const setNickname = function(set){
+                nickname = set;
+            }
+
+            const getRoomNumber = function() {
+                return roomNumber;
+            }
+
+            const setRoomNumber = function(set) {
+                roomNumber = set;
+            }
+            return {
+                getNickname : getNickname,
+                setNickname : setNickname,
+                getRoomNumber : getRoomNumber,
+                setRoomNumber : setRoomNumber,
+            }
+        })();
+
+
+
+// 참가자 그리기
+        const userList = function(users){
+            $(".chat .chat_users .user").text(users.length + "명");
+
+            let userHtml = "";
+            for(let i=0;i<users.length;i++) {
+                userHtml += `
+			<li>${users[i] }</li>`;
+            }
+            $(".chat .chat_nickname ul").html(userHtml);
+        }
+        function inputNullCheck() {
+            const member = document.querySelector("#nickname").value;
+            const title = document.querySelector(".quiz-title").innerText;
+            let textAnswer = '';
+            let answer = '';
+            if (document.querySelector(".input-answer")) {
+                answer = document.querySelector(".input-answer").value.trim(); // 입력형 답변
+            } else if (document.querySelector(".textarea-answer")) {
+                answer = document.querySelector(".textarea-answer").value; // 서술형 답변
+                textAnswer = "correct";
+            } else if (document.querySelector(".radio-form")) {
+                if(document.querySelector("#chk-o:checked")){
+                    answer = "o"; // OX 및 객관식 답변
+                } else if(document.querySelector("#chk-x:checked")){
+                    answer = "x";
+                } else {
+                    answer = "";
+                }
+            } else if(document.querySelector(".choice-form")){
+                if(document.querySelector(".choice-form:checked")){
+                    answer = document.querySelector(".choice-form:checked").value;
+                } else {
+                    answer = "";
+                }
+            }
+
+            let answerPut = document.querySelector(".answer").value;
+
+
+            // 정답 여부 확인
+            let score = 0;
+            let status = 'N';
+            if(answerPut.includes(',')){
+                console.log(", 포함");
+                answerPut = answerPut.split(',').map(answer => answer.trim());
+                if (answerPut.includes(answer)) {
+                    console.log("answer , 포함");
+                    status = 'Y';
+                    score = readTogetherDetailList[num].score;
+                }
+            } else {
+                console.log("미포함");
+                if (answerPut === answer) {
+                    console.log("포함");
+                    status = 'Y';
+                    score = readTogetherDetailList[num].score;
+                }
+            }
+
+            if(textAnswer === "correct") {
+                status = 'Y';
+                score = readTogetherDetailList[num].score;
+            }
+
+            console.log("member : submit" + member + roomNumber + title +answer + "answer:"+answerPut);
+            //stomp.send("/pub/socket/submit/"+roomNumber+"/" + member);
+            console.log("status : " + status);
+
+            $.ajax({
+                type: "POST",
+                url: "/insertScore",
+                contentType: "application/json;charset=UTF-8",
+                data: JSON.stringify({
+                    roomIdx: roomNumber,
+                    studentAnswer: answer,
+                    studentAnswerYN: status,
+                    studentName: member,
+                    studentQuestion: title,
+                    studentScore: score
+                }),
+                success: function (response) {
+                    console.log("응답 받음: ", response);
+                },
+                error: function (xhr, status, error) {
+                    console.error("에러 발생: ", error);
+                    alert("제출 중 오류가 발생했습니다. 다시 시도해주세요.");
+                }
+            });
+        }
+// 채팅방 구독
+        const chatingConnect = function(roomNumber){
+            // 기존 구독 취소
+            subscribeCancle();
+
+            const roomNum  = document.querySelector("#roomNumber").value;
+            const id1 = stomp.subscribe("/topic/next/" + roomNum, function(){
+                inputNullCheck();
+                nextQuizAnswer();
+            })
+            const id2 = stomp.subscribe("/topic/first/" + roomNum, function(){
+                console.log("첫번째 문제 토픽");
+                firstQuiz();
+            })
+            const id3 = stomp.subscribe("/topic/nextQuiz/" + roomNum, function(){
+
+                nextQuiz();
+            })
+            subscribe.push(id1);
+            subscribe.push(id2);
+            subscribe.push(id3);
+        }
+
+        function firstQuiz(){
+            console.log("firstQuiz insert");
+            let userHtml = "";
+            if(readTogetherDetailList[0].category === "short"){
+                userHtml = `
+            <div class="quiz-frame">
+                <div class="quiz-area">
+                    <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                    <div class="answer-group">
+                        <div class="answer-item">
+                            <input type="text" class="input-answer" placeholder="이 곳에 단답형 답변을 입력해주세요." maxlength="20">
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" class="answer" value="${readTogetherDetailList[0].answer}"/>
+            </div>
+                `;
+            } else if(readTogetherDetailList[0].category === "blank"){
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[0].blank.split('').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += ` <div class="blank-item">${users[i]}</div>`;
+                    }
+                    return forListHTML;
+                }
+                let mediaHtml = "";
+                if (readTogetherDetailList[0].media) {
+                    mediaHtml += `
+                    <img id="preview" src="${readTogetherDetailList[0].media}" onerror="this.src='/images/icon/ic-logo.png'" alt="" style="width: 300px;
+    height: 100%;">
+                `;
+                }
+
+                let youtubeHtml = "";
+                if (readTogetherDetailList[0].youtubeUrl) {
+                    youtubeHtml += `
+                    <iframe src="https://www.youtube.com/embed/${readTogetherDetailList[0].youtubeUrl}" style="width: 300px;
+    height: 100%;"></iframe>
+                `;
+                }
+
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                        <div class="answer-group type2">
+                            <div class="blank-quiz">
+                                <div class="blank-group">
+                                    ${forList()}
+                                </div>
+
+                                    ${mediaHtml}
+                                    ${youtubeHtml}
+                            </div>
+                            <div class="answer-item">
+                                <input type="text" class="input-answer" placeholder="이 곳에 정답을 입력해주세요." maxlength="20">
+                            </div>
+                        </div>
+                       <input type="hidden" class="answer" value="${readTogetherDetailList[0].answer}"/>
+                    </div>
+                </div>`;
+            } else if(readTogetherDetailList[0].category === "ox"){
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                        <div class="ox-area">
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-o" name="chk-ox">
+                                <label for="chk-o" class="radio-label-o">
+                                    <i class="ic-o"></i>
+                                    <span class="for-a11y">O</span>
+                                    <span class="desc">${readTogetherDetailList[0].ocomment}</span>
+                                </label>
+                            </span>
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-x" name="chk-ox">
+                                <label for="chk-x" class="radio-label-x">
+                                    <i class="ic-x"></i>
+                                    <span class="for-a11y">X</span>
+                                    <span class="desc">${readTogetherDetailList[0].xcomment}</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                    <input type="hidden" class="answer" value="${readTogetherDetailList[0].answer}"/>
+                </div>`;
+            } else if(readTogetherDetailList[0].category === "desc"){
+                userHtml = `<div class="quiz-frame">
+                        <div class="quiz-area">
+                            <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                            <div class="answer-group">
+                                <div class="answer-item">
+                                    <textarea class="textarea-answer" placeholder="이 곳에 서술형 답변을 입력해 주세요."></textarea>
+                                </div>
+                            </div>
+                            <div class="quiz-btn">
+                                <button type="button" class="btn-type-dark">
+                                    <span class="btn-txt">정답확인</span>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" class="answer" value="${readTogetherDetailList[0].answer}"/>
+                    </div>`;
+            } else if(readTogetherDetailList[0].category === "mul"){
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[0].mulTitle.split(',').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += `<span class="choice-item">
+                            <input type="radio" class="choice-form" id="${choiceId}" name="chk-choice">
+                            <label for="${choiceId}" class="choice-label"><span class="number">${i + 1}.</span> ${users[i]}</label>
+                        </span>`;
+                    }
+                    return forListHTML;
+                }
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[0].question}</p>
+                        <div class="choice-group">
+                             ${forList()}
+                        </div>
+                        <input type="hidden" class="answer" value="${readTogetherDetailList[0].answer}"/>
+                    </div>
+                </div>`;
+            }
+           /* let headerHtml1 = `<div class="title-group">같이하기</div>
+            <div class="quiz-timer"><i class="ic-clock2"></i>${readTogetherDetailList[0].timer}</div>`;*/
+            let headerHtml2 = `<strong class="current">1</strong> / ${readCount}`;
+            $(".content-area").html("");
+            $(".content-area").html(userHtml);
+            //$(".header-title").html("");
+/*            $(".header-title").html(headerHtml1);*/
+            $(".quiz-fraction").html("");
+            $(".quiz-fraction").html(headerHtml2);
+        }
+        function nextQuiz(){
+            const headHtml = num+1;
+            $(".current").html(headHtml);
+            document.querySelector("#submitBtn").style.display = 'block';
+            document.querySelector("#modifyBtn").style.display = 'none';
+            let userHtml = "";
+            console.log("num : " + num);
+            if(readTogetherDetailList[num].category === "short"){
+                userHtml = `
+                <div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        <div class="answer-group">
+                            <div class="answer-item">
+                                <input type="text" name="answer" class="input-answer" placeholder="이 곳에 정답을 입력해주세요." maxlength="20">
+                            </div>
+                        </div>
+                        <input type="hidden" class="answer" value="${readTogetherDetailList[num].answer}"/>
+                    </div>
+                </div>
+            `;
+            } else if(readTogetherDetailList[num].category === "blank"){
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[num].blank.split('').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += ` <div class="blank-item">${users[i]}</div>`;
+                    }
+                    return forListHTML;
+                }
+                let mediaHtml = "";
+                if (readTogetherDetailList[num].media) {
+                    mediaHtml += `
+                    <img id="preview" src="${readTogetherDetailList[num].media}" onerror="this.src='/images/icon/ic-logo.png'" alt="" style="width: 300px;
+                height: 100%;">
+                            `;
+                            }
+
+                            let youtubeHtml = "";
+                            if (readTogetherDetailList[num].youtubeUrl) {
+                                youtubeHtml += `
+                                <iframe src="https://www.youtube.com/embed/${readTogetherDetailList[num].youtubeUrl}" style="width: 300px;
+                height: 100%;"></iframe>
+                            `;
+                            }
+                userHtml= `<div class="quiz-frame">
+                                <div class="quiz-area">
+                                    <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                                    <div class="answer-group type2">
+                                        <div class="blank-quiz">
+                                            <div class="blank-group">
+                                                ${forList()}
+                                            </div>
+                                            ${mediaHtml}
+                                            ${youtubeHtml}
+                                        </div>
+                                        <div class="answer-item">
+                                            <input type="text" class="input-answer" placeholder="이 곳에 정답을 입력해주세요." maxlength="20">
+                                        </div>
+                                    </div>
+                                    <input type="hidden" class="answer" value="${readTogetherDetailList[num].answer}"/>
+                                </div>
+                            </div>
+                    `;
+            } else if (readTogetherDetailList[num].category === "ox") {
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        <div class="ox-area">
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-o" name="chk-ox">
+                                <label for="chk-o" class="radio-label-o">
+                                    <i class="ic-o"></i>
+                                    <span class="for-a11y">O</span>
+                                    <span class="desc">${readTogetherDetailList[num].ocomment}</span>
+                                </label>
+                            </span>
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-x" name="chk-ox">
+                                <label for="chk-x" class="radio-label-x">
+                                    <i class="ic-x"></i>
+                                    <span class="for-a11y">X</span>
+                                    <span class="desc">${readTogetherDetailList[num].xcomment}</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                    <input type="hidden" class="answer" value="${readTogetherDetailList[num].answer}"/>
+                </div>`;
+            } else if (readTogetherDetailList[num].category === "desc") {
+                userHtml = `<div class="quiz-frame">
+                        <div class="quiz-area">
+                            <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                            <div class="answer-group">
+                                <div class="answer-item">
+                                    <textarea class="textarea-answer" placeholder="이 곳에 서술형 답변을 입력해 주세요."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" class="answer" value="${readTogetherDetailList[num].answer}"/>
+                    </div>`;
+            } else if(readTogetherDetailList[num].category === "mul"){
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[num].mulTitle.split(',').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += `<span class="choice-item">
+                            <input type="radio" class="choice-form" id="${choiceId}" name="chk-choice" value="${users[i]}">
+                            <label for="${choiceId}" class="choice-label"><span class="number">${i + 1}.</span> ${users[i]}</label>
+                        </span>`;
+                    }
+                    return forListHTML;
+                }
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        <div class="choice-group">
+                             ${forList()}
+                        </div>
+                        <input type="hidden" class="answer" value="${readTogetherDetailList[num].answer}"/>
+                    </div>
+                </div>`;
+            }
+
+            $(".content-area").html("");
+            $(".content-area").html(userHtml);
+        }
+
+        function nextQuizAnswer() {
+
+            const heasult = `${readTogetherDetailList[num].comment}`;
+            $(".explain-text").html(heasult);
+
+            $(".btn-explain").click(function(event) {
+                console.log("해설누름");
+                $(".dialog-explain").dialog("open");
+                event.preventDefault(); // 기본 동작 취소
+            });
+
+            $(".dialog-explain").dialog({
+                autoOpen: false, // 초기에는 닫힌 상태로 설정
+                dialogClass: "responsive-type dialog-grid-b dark-type", // 다이얼로그 클래스 지정
+                resizable: true // 크기 조절 가능하도록 설정
+            });
+
+            document.querySelector("#submitBtn").style.display = 'none';
+            document.querySelector("#modifyBtn").style.display = 'none';
+            let userHtml = "";
+            let textCorrectAnswer = '';
+            let nextAnswer = '';
+            if (document.querySelector(".input-answer")) {
+                nextAnswer = document.querySelector(".input-answer").value; // 입력형 답변
+            } else if (document.querySelector(".textarea-answer")) {
+                nextAnswer = document.querySelector(".textarea-answer").value; // 서술형 답변
+                textCorrectAnswer = "correct";
+            } else if (document.querySelector(".radio-form")) {
+                if(document.querySelector("#chk-o:checked")){
+                    nextAnswer = "o"; // OX 및 객관식 답변
+                } else {
+                    nextAnswer = "x";
+                }
+            } else if(document.querySelector(".choice-form")){
+                if(document.querySelector(".choice-form:checked")){
+                    nextAnswer = document.querySelector(".choice-form:checked").value;
+                } else {
+                    nextAnswer = "";
+                }
+            }
+
+            let nextAnswerPut = document.querySelector(".answer").value;
+            // 정답 여부 확인
+
+            let nextStatus = 'N';
+            if(nextAnswerPut.includes(',')){
+                nextAnswerPut = nextAnswerPut.split(',').map(nextAnswer => nextAnswer.trim());
+                if (nextAnswerPut.includes(nextAnswer)) {
+                    nextStatus = 'Y';
+                }
+            } else {
+                if (nextAnswerPut === nextAnswer) {
+                    nextStatus = 'Y';
+                }
+            }
+
+            if(textCorrectAnswer === "correct") {
+                nextStatus = 'Y';
+            }
+            if(nextAnswer === "") {
+                nextStatus = 'N';
+            }
+            $(document).ready(function() {
+                $(".btn-explain").click(function(event) {
+                    console.log("해설누름");
+                    $(".dialog-explain").dialog("open");
+                    event.preventDefault(); // 기본 동작 취소
+                });
+
+                $(".dialog-explain").dialog({
+                    autoOpen: false, // 초기에는 닫힌 상태로 설정
+                    dialogClass: "responsive-type dialog-grid-b dark-type", // 다이얼로그 클래스 지정
+                    resizable: true // 크기 조절 가능하도록 설정
+                });
+            });
+            if(nextStatus === "N"){
+                document.querySelector("#inco").style.display = 'block';
+                setTimeout(function() {
+                    document.querySelector("#inco").style.display = 'none';
+                }, 5000)
+            } else {
+                document.querySelector("#co").style.display = 'block';
+                setTimeout(function() {
+                    document.querySelector("#co").style.display = 'none';
+                }, 5000);
+            }
+
+            if(readTogetherDetailList[num].category === "short"){
+                function oxResult() {
+                    let forListHTML = "";
+                    if(nextStatus === "Y") {
+                        forListHTML = `<i class="ic-answer-o"></i>`;
+                    } else {
+                        forListHTML = `<i class="ic-answer-x"></i>`;
+                    }
+                    return forListHTML;
+                }
+                userHtml = `
+                    <div class="quiz-frame">
+                    <div class="quiz-area">
+                        <div class="quiz-title-group">
+                            <button type="button" class="btn-explain"><span class="btn-txt">해설</span></button>
+                            <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        </div>
+                        <div class="answer-group">
+                            <div class="answer-item">
+                                <dl class="answer-result type-correct">
+                                    <dt class="answer-title">정답</dt>
+                                    <dd class="answer-value">${readTogetherDetailList[num].answer}</dd>
+                                </dl>
+                            </div>
+                            <div class="answer-item">
+                                <dl class="answer-result">
+                                    <dt class="answer-title">내가 입력한 답</dt>
+                                    <dd class="answer-value">
+                                       ${oxResult()}
+                                       ${nextAnswer}
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                        <div class="quiz-btn">
+
+                        </div>
+                    </div>
+                </div>
+                    `;
+            }
+            else if(readTogetherDetailList[num].category === "blank"){
+                function forList() {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[num].blank.split('').map(user => user.trim()).filter(user => user !== "");
+                    for (let i = 0; i < users.length; i++) {
+                        console.log(users[i]);
+                        const choiceId = `choice${i + 1}`;
+                        forListHTML += ` <div class="blank-item">${users[i]}</div>`;
+                    }
+                    return forListHTML;
+                }
+                function oxResult() {
+                    let forListHTML = "";
+                    if(nextStatus === "Y") {
+                        forListHTML = `<i class="ic-answer-o"></i>`;
+                    } else {
+                        forListHTML = `<i class="ic-answer-x"></i>`;
+                    }
+                    return forListHTML;
+                }
+                let mediaHtml = "";
+                if (readTogetherDetailList[num].media) {
+                    mediaHtml += `
+                    <img id="preview" src="${readTogetherDetailList[num].media}" onerror="this.src='/images/icon/ic-logo.png'" alt="" style="width: 300px;
+    height: 100%;">
+                `;
+                }
+
+                let youtubeHtml = "";
+                if (readTogetherDetailList[num].youtubeUrl) {
+                    youtubeHtml += `
+                    <iframe src="https://www.youtube.com/embed/${readTogetherDetailList[num].youtubeUrl}" style="width: 300px;
+    height: 100%;"></iframe>
+                `;
+                }
+                userHtml = `<div class="quiz-frame">
+            <div class="quiz-area">
+                <div class="quiz-title-group">
+                    <button type="button" class="btn-explain"><span class="btn-txt">해설</span></button>
+                    <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                </div>
+                <div class="answer-group type2">
+                    <div class="blank-quiz result">
+                        <div class="blank-group">
+                             ${forList()}
+                        </div>
+                        ${mediaHtml}
+                        ${youtubeHtml}
+                    </div>
+                    <div class="answer-item">
+                        <dl class="answer-result type-correct">
+                            <dt class="answer-title">정답</dt>
+                            <dd class="answer-value">${readTogetherDetailList[num].answer}</dd>
+                        </dl>
+                    </div>
+                    <div class="answer-item">
+                        <dl class="answer-result">
+                            <dt class="answer-title">내가 입력한 답</dt>
+                            <dd class="answer-value">
+                               ${oxResult()}
+                               ${nextAnswer}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div class="quiz-btn">
+
+                </div>
+            </div>
+        </div>`;
+            } else if(readTogetherDetailList[num].category === "ox"){
+                const answer = readTogetherDetailList[num].answer;
+                let oChecked = '';
+                let xChecked = '';
+
+                if (answer === 'o') {
+                    oChecked = 'checked';
+                } else if (answer === 'x') {
+                    xChecked = 'checked';
+                }
+
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <div class="quiz-title-group">
+                            <button type="button" class="btn-explain open-dialog-explain"><span class="btn-txt">해설</span></button>
+                            <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        </div>
+                        <div class="ox-area">
+                            <span class="ox-radio correct">
+                                <input type="radio" class="radio-form" id="chk-o" name="chk-ox"  ${oChecked} disabled>
+                                <label for="chk-o" class="radio-label-o">
+                                    <i class="ic-o"></i>
+                                    <span class="for-a11y">O</span>
+                                <span class="desc">${readTogetherDetailList[num].ocomment}</span>
+                                </label>
+                            </span>
+                            <span class="ox-radio">
+                                <input type="radio" class="radio-form" id="chk-x" name="chk-ox" ${xChecked} disabled>
+                                <label for="chk-x" class="radio-label-x">
+                                    <i class="ic-x"></i>
+                                    <span class="for-a11y">X</span>
+                                <span class="desc">${readTogetherDetailList[num].xcomment}</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+                </div>`;
+            } else if(readTogetherDetailList[num].category === "desc"){
+
+                userHtml = `<div class="quiz-frame">
+                    <div class="quiz-area">
+                        <div class="quiz-title-group">
+                            <button type="button" class="btn-explain"><span class="btn-txt">해설</span></button>
+                            <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                        </div>
+                        <div class="answer-group">
+                            <div class="answer-item">
+                                <textarea class="textarea-answer" placeholder="이 곳에 서술형 답변을 입력해 주세요." disabled>${nextAnswer}</textarea>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>`;
+            } else if(readTogetherDetailList[num].category === "mul"){
+                function forList(num) {
+                    let forListHTML = "";
+                    const users = readTogetherDetailList[num].mulTitle.split(',').map(user => user.trim()).filter(user => user !== "");
+                    const correctAnswer = readTogetherDetailList[num].answer; // 정답 가져오기
+
+                    for (let i = 0; i < users.length; i++) {
+                        const choiceId = `choice${i + 1}`;
+                        const labelHTML = (users[i] === correctAnswer) ?
+                            `<label for="${choiceId}" class="choice-label"><span class="number">${i + 1}.</span> ${users[i]}</label>` :
+                            `<label for="${choiceId}" class="choice-label" disabled><span class="number">${i + 1}.</span> ${users[i]}</label>`;
+
+                        forListHTML += `<span class="choice-item">
+                            <input type="radio" class="choice-form" id="${choiceId}" name="chk-choice" ${users[i] === correctAnswer ? 'checked' : ''} ${users[i] === correctAnswer ? '' : 'disabled'}>
+                            ${labelHTML}
+                        </span>`;
+                    }
+                    return forListHTML;
+                }
+                userHtml = `<div class="quiz-frame">
+                        <div class="quiz-area">
+                            <div class="quiz-title-group">
+                                <button type="button" class="btn-explain"><span class="btn-txt">해설</span></button>
+                                <p class="quiz-title">${readTogetherDetailList[num].question}</p>
+                            </div>
+                            <div class="choice-group">
+                                 ${forList(num)}
+                            </div>
+
+                        </div>
+                    </div>`;
+            }
+
+            if(readCount == num+1) {
+
+                const answerBtn = document.querySelector("#submitBtn").style.display = 'none';
+                const nextBtn = document.querySelector("#modifyBtn").style.display = 'none';
+                const resultBtn = document.querySelector("#resultBtn").style.display = 'block';
+            }
+            $(".content-area").html("");
+            $(".content-area").html(userHtml);
+            num++;
+        }
+
+//세팅
+        const initRoom = function(room, nickname) {
+            info.setNickname(nickname);
+            info.setRoomNumber(room.roomNumber);
+
+            $(".chat").show();
+            userList(room.users);
+            chatingConnect(room.roomNumber);
+
+            $(".chat_input_area textarea").focus();
+        }
+
+
+// 대화 중이던 방
+        const chatingRoom = function (){
+            let returnRoom = null;
+
+            $.ajax({
+                url: "/chatingRoom",
+                type: "GET",
+                async: false,
+            })
+                .then(function(result){
+                    if(result != "") {
+                        const room = result.chatingRoom;
+                        const nickname = result.myNickname;
+                        initRoom(room, nickname);
+                        returnRoom = result;
+                    }
+                })
+                .fail(function(result){
+                    //errorMSG(result);
+                })
+
+            return returnRoom;
+        };
+        document.querySelector("#resultBtn").addEventListener("click", function () {
+            const img = document.querySelector("#img").value;
+            const nickname = document.querySelector("#nickname").value;
+            location.href = '/resultStudent?roomNumber=' + roomNumber+ '&nickname=' + nickname + '&img=' + img;
+        });
+        document.querySelector("#modifyBtn").addEventListener("click", function () {
+            console.log("modifyBtn");
+            const member = document.querySelector("#nickname").value;
+            const title = document.querySelector(".quiz-title").innerText;
+            let textAnswer = '';
+            let answer = '';
+            if (document.querySelector(".input-answer")) {
+                answer = document.querySelector(".input-answer").value.trim(); // 입력형 답변
+            } else if (document.querySelector(".textarea-answer")) {
+                answer = document.querySelector(".textarea-answer").value; // 서술형 답변
+                textAnswer = "correct";
+            } else if (document.querySelector(".radio-form")) {
+                if(document.querySelector("#chk-o:checked")){
+                    answer = "o"; // OX 및 객관식 답변
+                } else {
+                    answer = "x";
+                }
+            } else if(document.querySelector(".choice-form")){
+                if(document.querySelector(".choice-form:checked")){
+                    answer = document.querySelector(".choice-form:checked").value;
+                } else {
+                    answer = "";
+                }
+            }
+
+            let answerPut = document.querySelector(".answer").value;
+
+
+            // 정답 여부 확인
+            let score = 0;
+            let status = 'N';
+            if(answerPut.includes(',')){
+                console.log(", 포함");
+                answerPut = answerPut.split(',').map(answer => answer.trim());
+                if (answerPut.includes(answer)) {
+                    console.log("answer , 포함");
+                    status = 'Y';
+                    score = readTogetherDetailList[num].score;
+                }
+            } else {
+                console.log("미포함");
+                if (answerPut === answer) {
+                    console.log("포함");
+                    status = 'Y';
+                    score = readTogetherDetailList[num].score;
+                }
+            }
+
+            if(textAnswer === "correct") {
+                status = 'Y';
+                score = readTogetherDetailList[num].score;
+            }
+
+            console.log("member : submit" + member + roomNumber + title +answer + "answer:"+answerPut);
+            //stomp.send("/pub/socket/submit/"+roomNumber+"/" + member);
+            console.log("status : " + status);
+/*
+            $.ajax({
+                type: "POST",
+                url: "/modifyScore",
+                contentType: "application/json;charset=UTF-8",
+                data: JSON.stringify({
+                    roomIdx: roomNumber,
+                    studentAnswer: answer,
+                    studentAnswerYN: status,
+                    studentName: member,
+                    studentQuestion: title,
+                    studentScore: score
+                }),
+                success: function (response) {
+                    console.log("응답 받음: ", response);
+                },
+                error: function (xhr, status, error) {
+                    console.error("에러 발생: ", error);
+                    alert("제출 중 오류가 발생했습니다. 다시 시도해주세요.");
+                }
+            });*/
+            swal({
+                title: "제출 완료",
+                text: "답을 수정하시겠습니까?.",
+                icon: "success",
+                button: "확인",
+                allowOutsideClick: false, // 모달 외부 클릭 방지
+                closeOnClickOutside: false, // 모달 외부 클릭 방지
+                closeOnEsc: false, // ESC 키 방지
+            })
+            document.querySelector("#submitBtn").style.display = 'none';
+            document.querySelector("#modifyBtn").style.display = 'block';
+
+        });
+
+        document.querySelector("#submitBtn").addEventListener("click", function () {
+            console.log("서브핏");
+            const member = document.querySelector("#nickname").value;
+            const title = document.querySelector(".quiz-title").innerText;
+            let textAnswer = '';
+            let answer = '';
+            if (document.querySelector(".input-answer")) {
+                answer = document.querySelector(".input-answer").value.trim(); // 입력형 답변
+            } else if (document.querySelector(".textarea-answer")) {
+                answer = document.querySelector(".textarea-answer").value; // 서술형 답변
+                textAnswer = "correct";
+            } else if (document.querySelector(".radio-form")) {
+                if(document.querySelector("#chk-o:checked")){
+                    answer = "o"; // OX 및 객관식 답변
+                } else {
+                    answer = "x";
+                }
+            } else if(document.querySelector(".choice-form")){
+                if(document.querySelector(".choice-form:checked")){
+                    answer = document.querySelector(".choice-form:checked").value;
+                } else {
+                    answer = "";
+                }
+            }
+
+            let answerPut = document.querySelector(".answer").value;
+
+
+            // 정답 여부 확인
+            let score = 0;
+            let status = 'N';
+            if(answerPut.includes(',')){
+                console.log(", 포함");
+                answerPut = answerPut.split(',').map(answer => answer.trim());
+                if (answerPut.includes(answer)) {
+                    console.log("answer , 포함");
+                    status = 'Y';
+                    score = readTogetherDetailList[num].score;
+                }
+            } else {
+                console.log("미포함");
+                if (answerPut === answer) {
+                    console.log("포함");
+                    status = 'Y';
+                    score = readTogetherDetailList[num].score;
+                }
+            }
+
+            if(textAnswer === "correct") {
+                status = 'Y';
+                score = readTogetherDetailList[num].score;
+            }
+
+            console.log("member : submit" + member + roomNumber + title +answer + "answer:"+answerPut);
+            stomp.send("/pub/socket/submit/"+roomNumber+"/" + member);
+            console.log("status : " + status);
+/*
+            $.ajax({
+                type: "POST",
+                url: "/insertScore",
+                contentType: "application/json;charset=UTF-8",
+                data: JSON.stringify({
+                    roomIdx: roomNumber,
+                    studentAnswer: answer,
+                    studentAnswerYN: status,
+                    studentName: member,
+                    studentQuestion: title,
+                    studentScore: score
+                }),
+                success: function (response) {
+                    console.log("응답 받음: ", response);
+                },
+                error: function (xhr, status, error) {
+                    console.error("에러 발생: ", error);
+                    alert("제출 중 오류가 발생했습니다. 다시 시도해주세요.");
+                }
+            });*/
+            swal({
+                title: "제출 완료",
+                text: "답을 수정하시겠습니까?.",
+                icon: "success",
+                button: "확인",
+                allowOutsideClick: false, // 모달 외부 클릭 방지
+                closeOnClickOutside: false, // 모달 외부 클릭 방지
+                closeOnEsc: false, // ESC 키 방지
+            })
+            document.querySelector("#submitBtn").style.display = 'none';
+            document.querySelector("#modifyBtn").style.display = 'block';
+
+        });
+
+        stomp.connect({}, function(frame){
+            console.log('Connected: ' + frame);
+            main();
+            firstQuiz();
+        });
+    }) // document.ready
+
+</script>
+</body>
+</html>

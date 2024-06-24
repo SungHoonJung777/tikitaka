@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/swiper-bundle.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/teacher.css}">
+    <!-- <script src="http://code.jquery.com/jquery-latest.min.js"></script>-->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+</head>
+<body>
+<div class="wrap type2">
+    <header class="header">
+        <div class="header-title">
+            <div class="title-group">같이하기</div>
+        </div>
+    </header>
+    <main class="content-area v2">
+        <div class="box-data">
+            <p class="q-title">퀴즈가 종료되었습니다. </p>
+            <p class="q-info"><i class="ic-info3"></i>서술형은 채점대상에 포함되지 않습니다.</p>
+            <div class="last-date">
+                <table>
+                    <colgroup>
+                        <col style="width:200px">
+                        <col style="width:auto">
+                        <col style="width:250px">
+                        <col style="width:200px">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col">
+                            번호
+                            <button type="button" class="btn-sorting2">
+                                <i class="ic-sorting-up2"></i>
+                                <span class="for-a11y">오름차순</span>
+                            </button>
+                        </th>
+                        <th scope="col">문제</th>
+                        <th scope="col">
+                            정답률
+                            <button type="button" class="btn-sorting2">
+                                <i class="ic-sorting-down2"></i>
+                                <span class="for-a11y">내림차순</span>
+                            </button>
+                        </th>
+                        <th scope="col">정답자/응시자</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="list, iterStat : ${readTogetherDetailList}">
+                        <td th:text="${iterStat.count}">1</td>
+                        <td class="t-left" th:text="${list.question}"> </td>
+                        <td th:text="${percent[iterStat.index]} + '%'">20%</td>
+                        <td th:text="${numCount[iterStat.index]} + '/' + ${readCount}"></td>
+                    </tr>
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="btn-a-center">
+                <button type="button" class="btn-type-black" id="closeBtn">종료</button>
+                <button type="button" class="btn-type-black" id="reportBtn">리포트로 이동</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        $(".select-c select").selectmenu();
+        document.querySelector("#closeBtn").addEventListener('click', ()=> {
+            window.close();
+        });
+        document.querySelector("#reportBtn").addEventListener('click', ()=>{
+            location.href = '/report/list';
+        })
+    </script>
+</div>
+</body>
+</html>

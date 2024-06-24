@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, minimum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나 즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+</head>
+<body data-menu-id="QUIZ">
+<div class="wrap" layout:fragment="content">
+
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+
+    <link rel="stylesheet" th:href="@{/css/grid.css}">
+    <main class="content-area sub">
+
+        <div class="content-container">
+            <form id="searchFrm" action="/main2">
+                <div class="top-sh-wrap">
+                    <div class="top-sh-box">
+                        <input th:if="${order != null && !order.equals('')}" type="hidden" name="order" th:value="${order}">
+                        <input th:if="${school != null && !school.equals('')}" type="hidden" name="school" th:value="${school}">
+                        <input th:if="${grade != null && !grade.equals('')}" type="hidden" name="grade" th:value="${grade}">
+                        <input type="hidden" th:if="${semester != null && !semester.equals('')}" name="semester" th:value="${semester}">
+                        <input type="hidden" th:if="${subject != null && !subject.equals('')}" name="subject" th:value="${subject}">
+                        <input type="hidden" th:if="${chapter != null && !chapter.equals('')}" name="chapter" th:value="${chapter}">
+                        <input type="hidden" th:if="${mediumChapter != null && !mediumChapter.equals('')}" name="mediumChapter" th:value="${mediumChapter}">
+                        <input type="hidden" th:if="${chaxi != null && !chaxi.equals('')}" name="chaxi" th:value="${chaxi}">
+                        <input type="text" class="in-sh" placeholder="검색어를 입력해주세요" id="title" name="search_word" th:value="${pageRequestDTO.search_word}">
+                        <button type="button" class="btn-sh" id="wordSearchBtn"><i class="ic-sh"></i>검색</button>
+                    </div>
+                </div>
+            </form>
+            <div class="wing-layout">
+                <div class="wing">
+                    <div class="wing-sh-box">
+                        <div class="folder-list">
+                            <li class="item">
+                                <div class="folder-header" id="elementaryBtn">초등</div>
+                                <div class="folder-body" id="elementaryBody" style="display: none;">
+                                    <form id="schoolEFrm" onsubmit="return false;">
+                                        <div class="class-btn-wrap">
+                                            <div class="basegradeDiv">
+                                                <div class="col group-a" id="basegradeBox">
+                                                    <button type="button" class="btn-class-choice grade-choice" name="grade" value="1">1학년</button>
+                                                    <button type="button" class="btn-class-choice grade-choice" name="grade" value="2">2학년</button>
+                                                    <button type="button" class="btn-class-choice grade-choice" name="grade" value="3">3학년</button>
+                                                </div>
+                                                <div class="col group-a" id="basegradeBox">
+                                                    <button type="button" class="btn-class-choice grade-choice" name="grade" value="4">4학년</button>
+                                                    <button type="button" class="btn-class-choice grade-choice" name="grade" value="5">5학년</button>
+                                                    <button type="button" class="btn-class-choice grade-choice" name="grade" value="6">6학년</button>
+                                                </div>
+                                                <div class="col group-a" id="basegradeBox">
+                                                    <button type="button" class="btn-class-choice grade-choice" name="grade" value="0">공통</button>
+                                                </div>
+                                            </div>
+                                            <span class="line"></span>
+                                            <div id="termBox">
+                                                <div class="col group-b">
+                                                    <button type="button" class="btn-class-choice term-choice" name="semester" value="1" disabled>1학기</button>
+                                                    <button type="button" class="btn-class-choice term-choice" name="semester" value="2" disabled>2학기</button>
+                                                </div>
+                                                <span class="line"></span>
+                                            </div>
+                                        </div>
+                                        <div class="select-group">
+                                            <div class="select-a">
+                                                <select name="subject" id="subjectGroup" disabled class="ui-selectmenu-button ui-selectmenu-button-closed ui-corner-all ui-button ui-widget">
+                                                    <option disabled selected>과목</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="select-group" id="largeChapterGroup" style="display: none;">
+                                            <div class="select-a">
+                                                <select name="chapter" id="largeChapterSelect" disabled  class="ui-selectmenu-button ui-selectmenu-button-closed ui-corner-all ui-button ui-widget">
+                                                    <option disabled selected>대단원</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="select-group" id="mediumChapterGroup" style="display: none;">
+                                            <div class="select-a">
+                                                <select name="mediumChapter" id="mediumChapterSelect" disabled class="ui-selectmenu-button ui-selectmenu-button-closed ui-corner-all ui-button ui-widget">
+                                                    <option disabled selected>중단원</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="select-group lecture-choice-wrap" id="smallChapterGroup" style="display: none;">
+                                            <div class="select-a">
+                                                <select name="chaxi" id="smallChapterSelect" disabled class="ui-selectmenu-button ui-selectmenu-button-closed ui-corner-all ui-button ui-widget">
+                                                    <option disabled selected>차시</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </li>
+                            <li class="item">
+                                <div class="folder-header" id="middleBtn">중등</div>
+                                <div class="folder-body" id="middleBody" style="display: none;">
+                                    <form id="schoolMFrm" onsubmit="return false;">
+                                        <div class="select-group">
+                                            <div class="select-a">
+                                                <select name="subject" id="subjectGroup1" class="ui-selectmenu-button ui-selectmenu-button-closed ui-corner-all ui-button ui-widget">
+                                                    <option disabled selected th:if="${!mSubjectList.isEmpty()}">과목</option>
+                                                    <option th:selected="${dto.subject == subject}" th:each="dto : ${mSubjectList}" th:value="${dto.subject}" th:text="${dto.subject}"></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </li>
+                            <li class="item">
+                                <div class="folder-header" id="highBtn">고등</div>
+                                <div class="folder-body" id="highBody" style="display: none;">
+                                    <form id="schoolHFrm" onsubmit="return false;">
+                                        <div class="select-group">
+                                            <div class="select-a">
+                                                <select name="subject" id="subjectGroup2" class="ui-selectmenu-button ui-selectmenu-button-closed ui-corner-all ui-button ui-widget">
+                                                    <option disabled selected th:if="${!hSubjectList.isEmpty()}">과목</option>
+                                                    <option th:selected="${dto.subject == subject}" th:each="dto : ${hSubjectList}" th:value="${dto.subject}" th:text="${dto.subject}"></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </li>
+                        </div>
+
+                        <div class="sh-btn-box">
+                            <button type="button" class="btn-type-darker size-sm resetBtn" onclick="resetFilters()">초기화</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-box">
+                    <div class="main-tabs" id="tabs">
+                        <div class="list-heading type-line" id="orderBy">
+                            <form>
+                                <input type="hidden" th:if="${search_word != null && !search_word.equals('')}" name="search_word" th:value="${search_word}">
+                                <input th:if="${school != null && !school.equals('')}" type="hidden" name="school" th:value="${school}">
+                                <input th:if="${grade != null && !grade.equals('')}" type="hidden" name="grade" th:value="${grade}">
+                                <input type="hidden" th:if="${semester != null && !semester.equals('')}" name="semester" th:value="${semester}">
+                                <input type="hidden" th:if="${subject != null && !subject.equals('')}" name="subject" th:value="${subject}">
+                                <input type="hidden" th:if="${chapter != null && !chapter.equals('')}" name="chapter" th:value="${chapter}">
+                                <input type="hidden" th:if="${mediumChapter != null && !mediumChapter.equals('')}" name="mediumChapter" th:value="${mediumChapter}">
+                                <input type="hidden" th:if="${chaxi != null && !chaxi.equals('')}" name="chaxi" th:value="${chaxi}">
+                                <p class="total-count" id="total">총&nbsp; <span class="value">[[${pageResponseDTO.total_count}]]</span>개</p>
+                                <button type="button" class="btn-list-sorting" name="order" id="orderReg" value="regDate" th:classappend="${order == 'regDate'} ? 'active' : ''">최신순</button>
+                                <button type="button" class="btn-list-sorting" name="order" value="likeCnt" th:classappend="${order == 'likeCnt'} ? 'active' : ''" >인기순</button>
+                            </form>
+                        </div>
+                        <div class="card-list type-library" id="quizList">
+                            <div class="card-item" th:each="dto:${pageResponseDTO.dtoList}" th:if="${!pageResponseDTO.dtoList.isEmpty()}">
+                                <a th:href="|@{/quiz/detail}?quizIdx=${dto.quizIdx}|" class="link-card">
+                                    <div class="card-img">
+                                        <div class="flag-list">
+                                            <th:block th:switch="${dto.school}">
+                                                <span class="flag-item purple" th:case="${'E'}">초등</span>
+                                                <span class="flag-item green" th:case="${'M'}">중등</span>
+                                                <span class="flag-item orange" th:case="${'H'}">고등</span>
+                                            </th:block>
+                                            <span class="flag-item blue">퀴즈</span>
+                                        </div>
+                                        <img th:src="${dto.thumbnail}" alt="이미지">
+                                    </div>
+                                    <div class="card-content">
+                                        <p class="card-title">[[${dto.title}]]</p>
+                                        <div class="card-data">
+                                            <p class="name"><span class="name-value">[[${dto.name}]]</span>선생님</p>
+                                            <p class="date"> [[${dto.regDate}]]</p>
+                                        </div>
+                                        <div class="like-box" onclick="insertLike(${dto.quizIdx})">
+                                            <i th:id="'zzim' + ${dto.quizIdx}"
+                                               th:classappend="${likeList != null and #lists.contains(likeList, dto.quizIdx)} ? ' ic-like' : ' ic-like-off'"></i>
+                                            [[${dto.likeCnt}]]
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="card-item" th:if="${pageResponseDTO.dtoList.isEmpty()}">
+                                <div class="card-content">등록된 퀴즈가 없습니다.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="float-end d-flex justify-content-center mt-5" id="paging">
+                        <ul class="pagination col flex-wrap" style="background-color: #ffffff;">
+                            <li class="page-item" th:if="${pageRequestDTO.prev_page_flag}">
+                                <a class="page-link arrow__color" th:data-num="${pageRequestDTO.page_block_start-10}" href="javascript:setPage([[${pageRequestDTO.page_block_start-10}]])"><i class="fa-solid fa-arrow-left"></i></a>
+                            </li>
+                            <li class="page-item" th:unless="${pageRequestDTO.prev_page_flag}">
+                                <a class="page-link arrow__color" th:data-num="${pageRequestDTO.page_block_start-10}" disabled><i class="fa-solid fa-arrow-left"></i></a>
+                            </li>
+
+                            <th:block th:each="i:${#numbers.sequence(pageRequestDTO.page_block_start, pageRequestDTO.page_block_end)}">
+                                <li class="page-item">
+                                    <a class="page-link theme__color" th:classappend="${pageRequestDTO.page == i} ? 'active' : ''" th:data-num="${i}" th:href="|javascript:setPage(${i})|">[[${i}]]</a>
+                                </li>
+                            </th:block>
+                            <li class="page-item" th:if="${pageRequestDTO.next_page_flag}">
+                                <a class="page-link arrow__color" th:data-num="${pageRequestDTO.page_block_end+1}" href="javascript:setPage([[${pageRequestDTO.page_block_end+1}]])"><i class="fa-solid fa-arrow-right"></i></a>
+                            </li>
+                            <li class="page-item" th:unless="${pageRequestDTO.next_page_flag}">
+                                <a class="page-link arrow__color" th:data-num="${pageRequestDTO.page_block_end+1}" disabled><i class="fa-solid fa-arrow-right"></i></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form id="hiddenFrm">
+            <input  type="hidden" name="order" >
+            <input  type="hidden" name="school">
+            <input type="hidden" name="grade" >
+            <input type="hidden"  name="semester">
+            <input type="hidden"  name="subject" >
+            <input type="hidden" name="chapter" >
+            <input type="hidden"  name="mediumChapter" >
+            <input type="hidden"  name="chaxi" >
+            <input type="hidden" name="search_word" >
+            <input type="hidden"  name="page" >
+        </form>
+    </main>
+
+    <script>
+
+        function fetchQuizzes(school, grade, semester, subject, chapter, mediumChapter, chaxi, order) {
+            let formData1 = new FormData($("#hiddenFrm")[0]);
+            var params = {};
+
+            if (formData1.get("school")) params.school = formData1.get("school");
+            if (formData1.get("grade")) params.grade = formData1.get("grade");
+            if (formData1.get("semester")) params.semester = formData1.get("semester");
+            if (formData1.get("subject")) params.subject = formData1.get("subject");
+            if (formData1.get("chapter")) params.chapter = formData1.get("chapter");
+            if (formData1.get("mediumChapter")) params.mediumChapter = formData1.get("mediumChapter");
+            if (formData1.get("chaxi")) params.chaxi = formData1.get("chaxi");
+            if ($('#title').val()) params.search_word = $('#title').val();
+            if (formData1.get("order")) params.order = formData1.get("order");
+
+            // 페이지 값 가져오기
+            if (formData1.get("page")) {
+                params.page = formData1.get("page");
+            } else {
+                params.page = 1;  // 기본값으로 1페이지를 설정
+            }
+
+            $.ajax({
+                url: '/fetchQuizzes',
+                method: 'POST',
+                data: params,
+                success: function(data) {
+                    var likeList = data.likeList;
+                    var quizzes = data.quizzes.dtoList;
+                    var quizList = $('#quizList');
+                    var total = $('#total');
+                    var paging = $('#paging');
+                    quizList.empty();
+                    total.empty();
+                    paging.empty();
+                    if (quizzes.length > 0) {
+                        total.append('총&nbsp; <span class="value">' + data.quizzes.total_count + '</span>개');
+                        quizzes.forEach(function(quiz) {
+                            quizList.append(
+                                '<div class="card-item">' +
+                                '<a href="/quiz/detail?quizIdx=' + quiz.quizIdx + '" class="link-card">' +
+                                '<div class="card-img">' +
+                                '<div class="flag-list">' +
+                                '<span class="flag-item ' + (quiz.school === 'E' ? 'purple' : (quiz.school === 'M' ? 'green' : 'orange')) + '">' + (quiz.school === 'E' ? '초등' : (quiz.school === 'M' ? '중등' : '고등')) + '</span>' +
+                                '<span class="flag-item blue">퀴즈</span>' +
+                                '</div>' +
+                                '<img src="' + quiz.thumbnail + '" alt="이미지">' +
+                                '</div>' +
+                                '<div class="card-content">' +
+                                '<p class="card-title">' + quiz.title + '</p>' +
+                                '<div class="card-data">' +
+                                '<p class="name"><span class="name-value">' + quiz.name + '</span>선생님</p>' +
+                                '<p class="date">' + quiz.regDate + '</p>' +
+                                '</div>' +
+                                '<div class="like-box" onclick="insertLike(' + quiz.quizIdx + ')">' +
+                                '<i id="zzim' + quiz.quizIdx + '" class="' + (likeList.includes(quiz.quizIdx) ? 'ic-like' : 'ic-like-off') + '"></i>' +
+                                quiz.likeCnt +
+                                '</div>' +
+                                '</div>' +
+                                '</a>' +
+                                '</div>'
+                            );
+                        });
+                        var pageRequestDTO = data.quizzes.pageRequestDTO;
+                        var pagination = '<ul class="pagination col flex-wrap" style="background-color: #ffffff;">';
+                        if (pageRequestDTO.prev_page_flag) {
+                            pagination += '<li class="page-item"><a class="page-link arrow__color" href="javascript:setPage(' + (pageRequestDTO.page_block_start - 10) + ');"><i class="fa-solid fa-arrow-left"></i></a></li>';
+                        } else {
+                            pagination += '<li class="page-item"><a class="page-link arrow__color" disabled><i class="fa-solid fa-arrow-left"></i></a></li>';
+                        }
+
+                        for (var i = pageRequestDTO.page_block_start; i <= pageRequestDTO.page_block_end; i++) {
+                            pagination += '<li class="page-item ' + (pageRequestDTO.page == i ? 'active' : '') + '"><a class="page-link theme__color" href="javascript:setPage(' + i + ');">' + i + '</a></li>';
+                        }
+
+                        if (pageRequestDTO.next_page_flag) {
+                            pagination += '<li class="page-item"><a class="page-link arrow__color" href="javascript:setPage(' + (pageRequestDTO.page_block_end + 1) + ');"><i class="fa-solid fa-arrow-right"></i></a></li>';
+                        } else {
+                            pagination += '<li class="page-item"><a class="page-link arrow__color" disabled><i class="fa-solid fa-arrow-right"></i></a></li>';
+                        }
+                        pagination += '</ul>';
+                        paging.append(pagination);
+                    } else {
+                        total.append('총&nbsp; <span class="value">0</span>개');
+                        quizList.append('<div class="card-item"><div class="card-content">등록된 퀴즈가 없습니다.</div></div>');
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('퀴즈 데이터를 가져오는 데 실패했습니다.');
+                    console.log("AJAX Error: " + textStatus);
+                    console.log("Details: " + errorThrown);
+                    console.log("Response: " + jqXHR.responseText);
+                }
+            });
+        }
+
+        function setPage(page) {
+            $('#hiddenFrm input[name="page"]').val(page);
+            fetchQuizzes();
+        }
+
+        function setOrder(order, element) {
+            $('#hiddenFrm input[name="order"]').val(order);
+            // 버튼 활성화
+            $('.btn-list-sorting').removeClass('active');
+            $(element).addClass('active');
+            fetchQuizzes();
+        }
+
+        // 최신순/인기순 버튼을 클릭할 때 setOrder 함수 호출
+        $(document).on('click', '.btn-list-sorting', function() {
+            var order = $(this).val();
+            setOrder(order, this);
+        });
+
+        $(document).ready(function() {
+            var selectedGrade = null;
+            var selectedSemester = null;
+            var selectedSubject = null;
+            var selectedChapter = null;
+            var selectedMediumChapter = null;
+            var selectedChaxi = null;
+
+            function searchLibraries() {
+                const title = $('#title').val().trim();
+                if (!title) {
+                    alert("검색어를 입력해주세요");
+                    $("#title").focus();
+                } else {
+                    $('#hiddenFrm input[name="search_word"]').val(title);
+                    fetchQuizzes();
+                }
+            }
+
+            $('#wordSearchBtn').on('click', function () {
+                searchLibraries();
+            });
+
+            function hideAllBodies() {
+                $('#elementaryBody').hide();
+                $('#middleBody').hide();
+                $('#highBody').hide();
+            }
+
+            $('#elementaryBtn').on('click', function() {
+                //처음 정렬 최신순으로 고정
+                $('#hiddenFrm input[name="order"]').val('regDate');
+                $('.btn-list-sorting').removeClass('active');
+                $('#orderReg').addClass('active');
+                hideAllBodies();
+                $('#subjectGroup').hide();
+                $('#largeChapterGroup').hide();
+                $('#mediumChapterGroup').hide();
+                $('#smallChapterGroup').hide();
+                $('#elementaryBody').show();
+                resetFiltersExcept(['school', 'grade', 'semester']);
+                $('.grade-choice').removeClass('active');
+                $('.term-choice').removeClass('active');
+                $('#hiddenFrm input[name="page"]').val(1);
+                $('#hiddenFrm input[name="school"]').val("E");
+
+                $('#hiddenFrm input[name="grade"]').val('');
+                $('#hiddenFrm input[name="semester"]').val('');
+
+                fetchQuizzes('E');
+            });
+
+            $('#middleBtn').on('click', function() {
+                //처음 정렬 최신순으로 고정
+                $('#hiddenFrm input[name="order"]').val('regDate');
+                $('.btn-list-sorting').removeClass('active');
+                $('#orderReg').addClass('active');
+                hideAllBodies();
+                $('#subjectGroup1').val("과목").change();
+                $('#middleBody').show();
+                resetFiltersExcept(['school', 'grade', 'semester']);
+                $('#hiddenFrm input[name="page"]').val(1);
+                $('#hiddenFrm input[name="school"]').val("M");
+
+                $('#hiddenFrm input[name="grade"]').val('');
+                $('#hiddenFrm input[name="semester"]').val('');
+                fetchQuizzes('M');
+            });
+
+            $('#highBtn').on('click', function() {
+                //처음 정렬 최신순으로 고정
+                $('#hiddenFrm input[name="order"]').val('regDate');
+                $('.btn-list-sorting').removeClass('active');
+                $('#orderReg').addClass('active');
+                hideAllBodies();
+                $('#subjectGroup2').val("과목").change();
+                $('#highBody').show();
+                resetFiltersExcept(['school', 'grade', 'semester']);
+                $('#hiddenFrm input[name="page"]').val(1);
+                $('#hiddenFrm input[name="school"]').val("H");
+                $('#hiddenFrm input[name="grade"]').val('');
+                $('#hiddenFrm input[name="semester"]').val('');
+                fetchQuizzes('H');
+            });
+
+            $('.grade-choice').on('click', function() {
+                $('#subjectGroup').hide();
+                $('#largeChapterGroup').hide();
+                $('#mediumChapterGroup').hide();
+                $('#smallChapterGroup').hide();
+                selectedGrade = $(this).val();
+                $('#hiddenFrm input[name="page"]').val(1);
+                $('#hiddenFrm input[name="grade"]').val(selectedGrade);
+                $('#hiddenFrm input[name="semester"]').val('');
+                $('.term-choice').removeClass('active');
+                if (selectedGrade === '0') { // 공통
+                    $('.group-b').hide();
+                    selectedSemester = 0;
+                    $('#hiddenFrm input[name="semester"]').val(0);
+                    $('#subjectGroup').show();
+                    fetchSubjects(selectedGrade, selectedSemester);
+                    $('.term-choice').prop('disabled', true);
+                } else {
+                    $('.group-b').show();
+                    $('.term-choice').prop('disabled', false);
+                    $('#subjectGroup, #largeChapterSelect, #mediumChapterSelect, #smallChapterSelect').prop('disabled', true).empty().append('<option disabled selected>과목</option>');
+                    $('.lecture-choice-wrap').hide();
+                }
+                // 버튼 활성화
+                $('.grade-choice').removeClass('active');
+                $(this).addClass('active');
+                fetchQuizzes('E');
+            });
+
+            $('.term-choice').on('click', function() {
+                selectedSemester = $(this).val();
+                $('#subjectGroup').hide();
+                $('#largeChapterGroup').hide();
+                $('#mediumChapterGroup').hide();
+                $('#smallChapterGroup').hide();
+                if (selectedGrade) {
+                    $('#subjectGroup').show();
+                    fetchSubjects(selectedGrade, selectedSemester);
+                    $('#hiddenFrm input[name="page"]').val(1);
+                    $('#hiddenFrm input[name="semester"]').val(selectedSemester);
+
+                } else {
+                    alert('먼저 학년을 선택하세요.');
+                }
+                // 버튼 활성화
+                $('.term-choice').removeClass('active');
+                $(this).addClass('active');
+                fetchQuizzes('E');
+            });
+
+            $('#subjectGroup').on('change', function() {
+                selectedSubject = $(this).val();
+                var selectedOption = $(this).find('option:selected');
+                var classIdx = selectedOption.data('classidx');
+                fetchLargeChapters(classIdx);
+                $('#hiddenFrm input[name="page"]').val(1);
+                $('#hiddenFrm input[name="subject"]').val(selectedSubject);
+                fetchQuizzes('E');
+            });
+
+            $('#largeChapterSelect').on('change', function() {
+                selectedChapter = $(this).val();
+                var selectedOption = $(this).find('option:selected');
+                var largeIdx = selectedOption.data('largeidx');
+                fetchMediumChapters(largeIdx);
+                $('#hiddenFrm input[name="page"]').val(1);
+                $('#hiddenFrm input[name="chapter"]').val(selectedChapter);
+                fetchQuizzes('E');
+            });
+
+            $('#mediumChapterSelect').on('change', function() {
+                selectedMediumChapter = $(this).val();
+                var selectedOption = $(this).find('option:selected');
+                var mediumChapterIdx = selectedOption.data('mediumidx');
+                fetchSmallChapters(mediumChapterIdx);
+                $('#hiddenFrm input[name="page"]').val(1);
+                $('#hiddenFrm input[name="mediumChapter"]').val(selectedMediumChapter);
+                fetchQuizzes('E');
+            });
+
+            $('#smallChapterSelect').on('change', function() {
+                selectedChaxi = $(this).val();
+                var selectedOption = $(this).find('option:selected');
+                var smallChapterIdx = selectedOption.data('smallidx');
+                $('#hiddenFrm input[name="page"]').val(1);
+                $('#hiddenFrm input[name="chaxi"]').val(selectedChaxi);
+                fetchQuizzes('E');
+            });
+
+            $('#subjectGroup1').on('change', function() {
+                var subject = $(this).val();
+                $('#hiddenFrm input[name="subject"]').val(subject);
+                fetchQuizzes('M');
+            });
+
+            $('#subjectGroup2').on('change', function() {
+                var subject = $(this).val();
+                $('#hiddenFrm input[name="subject"]').val(subject);
+                fetchQuizzes('H');
+            });
+
+            function fetchSubjects(grade, semester) {
+                $.ajax({
+                    url: '/fetchSubjects',
+                    method: 'GET',
+                    data: { grade: grade, semester: semester },
+                    success: function(data) {
+                        var subjectGroup = $('#subjectGroup');
+                        subjectGroup.empty().append('<option disabled selected>과목</option>');
+                        data.forEach(function(subject) {
+                            subjectGroup.append('<option value="' + subject.subject + '" data-classIdx="' + subject.classIdx + '">' + subject.subject + '</option>');
+                        });
+                        subjectGroup.prop('disabled', false);
+                    },
+                    error: function(error) {
+                        alert('과목 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function fetchLargeChapters(classIdx) {
+                $.ajax({
+                    url: '/fetchLargeChapters',
+                    method: 'GET',
+                    data: { classIdx: classIdx },
+                    success: function(data) {
+                        var largeChapterSelect = $('#largeChapterSelect');
+                        largeChapterSelect.empty().append('<option disabled selected>대단원</option>');
+                        if (data.length > 0) {
+                            $('#largeChapterGroup').show();
+                            data.forEach(function(chapter) {
+                                largeChapterSelect.append('<option value="' + chapter.largeChapter + '" data-largeIdx="' + chapter.largeIdx + '">' + chapter.largeChapter + '</option>');
+                            });
+                            largeChapterSelect.prop('disabled', false);
+                        } else {
+                            $('#largeChapterGroup').hide();
+                        }
+                    },
+                    error: function(error) {
+                        alert('대단원 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function fetchMediumChapters(largeIdx) {
+                $.ajax({
+                    url: '/fetchMediumChapters',
+                    method: 'GET',
+                    data: { largeIdx: largeIdx },
+                    success: function(data) {
+                        var mediumChapterSelect = $('#mediumChapterSelect');
+                        mediumChapterSelect.empty().append('<option disabled selected>중단원</option>');
+                        if (data.length > 0) {
+                            $('#mediumChapterGroup').show();
+                            data.forEach(function(chapter) {
+                                mediumChapterSelect.append('<option value="' + chapter.mediumChapter + '" data-mediumIdx="' + chapter.mediumIdx + '">' + chapter.mediumChapter + '</option>');
+                            });
+                            mediumChapterSelect.prop('disabled', false);
+                        } else {
+                            $('#mediumChapterGroup').hide();
+                        }
+                    },
+                    error: function(error) {
+                        alert('중단원 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function fetchSmallChapters(mediumIdx) {
+                $.ajax({
+                    url: '/fetchSmallChapters',
+                    method: 'GET',
+                    data: { mediumIdx: mediumIdx },
+                    success: function(data) {
+                        var smallChapterSelect = $('#smallChapterSelect');
+                        smallChapterSelect.empty().append('<option disabled selected>차시 선택</option>');
+                        if (data.length > 0) {
+                            $('#smallChapterGroup').show();
+                            data.forEach(function(chapter) {
+                                smallChapterSelect.append('<option value="' + chapter.smallChapter  + '" data-smallIdx="' + chapter.smallIdx + '">' + chapter.smallChapter + '</option>');
+                            });
+                            smallChapterSelect.prop('disabled', false);
+                        } else {
+                            $('#smallChapterGroup').hide();
+                        }
+                    },
+                    error: function(error) {
+                        alert('차시 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function resetFiltersExcept(exceptions) {
+                var hiddenFrm = $('#hiddenFrm')[0];
+                for (var i = 0; i < hiddenFrm.length; i++) {
+                    var input = hiddenFrm[i];
+                    if (!exceptions.includes(input.name)) {
+                        input.value = '';
+                    }
+                }
+                $('#subjectGroup, #largeChapterSelect, #mediumChapterSelect, #smallChapterSelect').val('').prop('disabled', true);
+                $('.term-choice').prop('disabled', true);
+            }
+        });
+
+        function resetFilters() {
+            $('#elementaryBody, #middleBody, #highBody').hide();
+            window.location.href = "/main2";
+        }
+    </script>
+</div>
+</body>
+</html>

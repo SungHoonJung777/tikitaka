@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+  <meta charset="utf-8">
+  <title>필통</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="keywords" content="T셀파, 필통"/>
+  <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나 즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+  <script th:src="@{/js/jquery.js}"></script>
+  <script th:src="@{/js/jquery-ui.js}"></script>
+  <script th:src="@{/js/swiper-bundle.min.js}"></script>
+
+
+  <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+  <link rel="stylesheet" th:href="@{/css/swiper-bundle.min.css}" />
+  <link rel="stylesheet" th:href="@{/css/base.css}">
+  <link rel="stylesheet" th:href="@{/css/student.css}">
+  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <style>
+    .chat-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat {
+      display: flex;
+      flex-direction: column;
+      width: 500px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      margin-bottom: 50px;
+    }
+
+    .chat_body {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .chat_title {
+      font-size: 24px;
+      margin: 0 0 16px;
+      color: #333;
+    }
+
+    .chat_back {
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: #007BFF;
+      margin-bottom: 16px;
+    }
+
+    .chat_list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      flex-grow: 1;
+      max-height: 300px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      padding: 8px;
+    }
+
+    .chat_list li {
+      margin-bottom: 8px;
+    }
+
+    .chat_input {
+      display: flex;
+      align-items: center;
+      margin-top: 16px;
+    }
+
+    .chat_input_area {
+      flex-grow: 1;
+    }
+
+    .chat_input_area textarea {
+      width: 100%;
+      height: 50px;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      resize: none;
+    }
+
+    .chat_button_area {
+      margin-left: 8px;
+    }
+
+    .chat_button_area button {
+      padding: 10px 16px;
+      background-color: #007BFF;
+      border: none;
+      border-radius: 4px;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .chat_button_area button:hover {
+      background-color: #0056b3;
+    }
+
+    .chat_users {
+      padding: 16px;
+      border-top: 1px solid #eee;
+    }
+
+    .chat_users h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .chat_users .user {
+      font-weight: bold;
+      color: #007BFF;
+    }
+
+    .chat_nickname ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .chat_nickname ul li {
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+<input  id="input-name" type="hidden" th:value="${nickname}"/>
+<input id="roomNumber" type="hidden" th:value="${roomNumber}"/>
+<input id="character" type="hidden" th:value="${character}"/>
+
+<div class="wrap">
+  <header class="header">
+    <div class="header-title">
+      <div class="title-group">같이하기</div>
+      <h2 class="title">같이 학습지를 풀어봅시다</h2>
+    </div>
+  </header>
+  <main class="content-area ready">
+    <p class="ready-txt1">선생님이 시작하기 버튼을 누르면 <br>바로 풀이가 시작돼요.</p>
+    <div class="img-box color2"><img th:src="@{'../../images/character/' + ${character} + '.png'}" alt=""></div>
+    <div class="chat">
+      <div>
+        <div class="chat_body">
+          <h2 class="chat_title">1번방</h2>
+          <button class="chat_back" style="display: none;">방나가기</button>
+
+          <ul class="chat_list">
+            <li>
+              <!-- <div class="notification">
+                  <span></span>
+              </div> -->
+            </li>
+          </ul>
+
+          <div class="chat_input">
+            <div class="chat_input_area">
+              <textarea></textarea>
+            </div>
+
+            <div class="chat_button_area">
+              <button>전송</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat_users">
+          <h2>
+            참가인원
+            <span class="user"></span>
+          </h2>
+
+          <div class="chat_nickname">
+            <ul>
+              <li>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="ready-txt2"><span class="m-block" th:text="${nickname}"></span>님이 입장하였습니다.</p>
+
+  </main>
+</div>
+
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+    // 함수로 클릭 이벤트 트리거
+    function triggerClick() {
+      const event = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window
+      });
+      document.body.dispatchEvent(event);
+    }
+
+    // 페이지 로드 시 클릭 이벤트 트리거
+    triggerClick();
+  });
+  let isPageUnloading = false;
+  $(document).ready(function(){
+
+
+    const socket = new SockJS('/websocket');
+    const stomp = Stomp.over(socket);
+    stomp.debug = null; // stomp 콘솔출력 X
+
+
+// 구독을 취소하기위해 구독 시 아이디 저장
+    const subscribe = [];
+
+
+
+// 모든 구독 취소하기
+    const subscribeCancle = function() {
+      const length = subscribe.length;
+      for(let i=0;i<length;i++) {
+        const sid = subscribe.pop();
+        stomp.unsubscribe(sid.id);
+      }
+    }
+
+
+// 메인 화면
+    const main = function() {
+      $("main").show();
+
+      // 기존 구독 취소
+      subscribeCancle();
+
+      // 채팅 중이었던 방이 있을때
+      const room = chatingRoom();
+
+      if(room) {
+        return;
+      }
+
+      const subscribeId = stomp.subscribe("/topic/roomList", function(){
+        // "/topic/roomList"에서 메세지가 왔을때 실행할 함수
+        //chatingRoomList();
+      });
+
+      subscribe.push(subscribeId);
+      //chatingRoomList();
+    };
+    function kick(message) {
+      // WebSocket 메시지 수신 처리
+      console.log("######kick");
+      const confirmMessage = JSON.parse(message.body);
+      const member = document.querySelector("#input-name").value;
+      if (confirmMessage === member) {
+        swal({
+          title: "강퇴",
+          text: "당신이 강퇴되었습니다.",
+          icon: "warning",
+          button: "확인",
+          allowOutsideClick: false, // 모달 외부 클릭 방지
+          closeOnClickOutside: false, // 모달 외부 클릭 방지
+          closeOnEsc: false, // ESC 키 방지
+        }).then((result) => {
+          if (result) {
+            window.close();
+          }
+        });
+      } else {
+        swal({
+          title: "강퇴",
+          text: "당신이 강퇴되었습니다.",
+          icon: "warning",
+          button: "확인",
+          allowOutsideClick: false, // 모달 외부 클릭 방지
+          closeOnClickOutside: false, // 모달 외부 클릭 방지
+          closeOnEsc: false, // ESC 키 방지
+        }).then((result) => {
+          if (result) {
+            window.close();
+          }
+        });
+      }
+    }
+// ----------------- 메인화면 ---------------------------
+
+
+
+// ----------------- 채팅방 ---------------------------
+
+
+    const info = (function(){
+      let nickname = "";
+      let roomNumber = "";
+
+      const getNickname = function() {
+        return nickname;
+      }
+
+      const setNickname = function(set){
+        nickname = set;
+      }
+
+      const getRoomNumber = function() {
+        return roomNumber;
+      }
+
+      const setRoomNumber = function(set) {
+        roomNumber = set;
+      }
+      return {
+        getNickname : getNickname,
+        setNickname : setNickname,
+        getRoomNumber : getRoomNumber,
+        setRoomNumber : setRoomNumber,
+      }
+    })();
+
+
+    const errorMSG = function(result){
+      if(result.status == 404) {
+        alert("종료되었거나 없는 방입니다");
+      } else {
+        alert("에러가 발생했습니다");
+      }
+      location.href = "/";
+    }
+
+
+// 참가자 그리기
+    const userList = function(users, characters){
+      $(".chat .chat_users .user").text(users.length + "명");
+
+      let userHtml = "";
+      for(let i=0;i<users.length;i++) {
+        userHtml += `
+			<li>${users[i] }</li>`;
+      }
+
+      $(".chat .chat_nickname ul").html(userHtml);
+    }
+
+
+// 메세지 그리기
+    const chating = function(messageInfo){
+      let nickname = messageInfo.nickname;
+      let message = messageInfo.message;
+
+      message = message.replaceAll("\n", "<br>").replaceAll(" ", "&nbsp");
+
+      const date = messageInfo.date;
+      const d = new Date(date);
+
+      const time = String(d.getHours()).padStart(2, "0")
+              + ":"
+              + String(d.getMinutes()).padStart(2, "0");
+
+      let sender = "";
+
+      if(info.getNickname() == nickname) {
+        sender = "chat_me";
+        nickname = "";
+      } else {
+        sender=  "chat_other";
+      }
+
+
+      const chatHtml = `
+        <li>
+            <div class=${sender }>
+            	<div>
+	            	<div class="nickname">${nickname }</div>
+	            	<div class="message">
+		                <span class=chat_in_time>${time }</span>
+		                <span class="chat_content">${message }</span>
+	                <span>
+                </div>
+            </div>
+        </li>`;
+
+      $(".chat ul.chat_list").append(chatHtml);
+
+      $(".chat ul").scrollTop($(".chat ul")[0].scrollHeight);
+    }
+
+// 채팅방 구독
+    const chatingConnect = function(roomNumber){
+      // 기존 구독 취소
+      subscribeCancle();
+
+      // 메세지를 받을 경로
+      const id1 = stomp.subscribe("/topic/message/" + roomNumber, function(result){
+        const message = JSON.parse(result.body);
+
+        // 메세지가 왔을때 실행할 함수
+        chating(message);
+      })
+
+      // 입장,퇴장 알림을 받을 경로
+      const id2 = stomp.subscribe("/topic/notification/" + roomNumber, function(result){
+        const room = JSON.parse(result.body);
+        const message = room.message;
+
+        // 메세지가 왔을때 실행할 함수
+        userList(room.users);
+
+        const chatHtml = `
+	        <li>
+	        	<div class="notification">
+            		<span>${message}</span>
+            	</div>
+	        </li>`;
+
+        $(".chat ul.chat_list").append(chatHtml);
+
+        $(".chat ul").scrollTop($(".chat ul")[0].scrollHeight);
+
+      })
+      const member = document.querySelector("#input-name").value;
+      const id3 = stomp.subscribe('/topic/kick/' + roomNumber + '/' + member, function(message) {
+        console.log("구독시작######kick");
+        isPageUnloading = true;
+        kick(message);
+      });
+
+      const id4 = stomp.subscribe('/topic/start/'+roomNumber , function (){
+        console.log("같이하기 시작");
+        const character = document.querySelector("#character").value;
+        isPageUnloading = true;
+        location.href='/startStudent?roomNumber=' + roomNumber + '&nickname=' + member + '&character=' + character;
+      });
+      subscribe.push(id1);
+      subscribe.push(id2);
+      subscribe.push(id3);
+      subscribe.push(id4);
+    }
+
+
+
+// 채팅방 세팅
+    const initRoom = function(room, nickname) {
+      // 방 목록 업데이트
+      stomp.send("/pub/socket/roomList");
+
+      //$("main").hide();
+
+      info.setNickname(nickname);
+      info.setRoomNumber(room.roomNumber);
+
+      $(".chat").show();
+      $(".chat .chat_title").text(room.roomName);
+
+      userList(room.users , room.characters);
+      chatingConnect(room.roomNumber);
+
+      $(".chat_input_area textarea").focus();
+    }
+
+
+// 메세지 보내기
+    const sendMessage = function(){
+      const message = $(".chat_input_area textarea");
+
+      if (message.val() == "") {
+        return;
+      }
+
+      const roomNumber = info.getRoomNumber();
+      const nickname = info.getNickname();
+
+      const data = {
+        message : message.val(),
+        nickname : nickname,
+      }
+
+      stomp.send("/pub/socket/sendMessage/" + roomNumber, {}, JSON.stringify(data));
+      message.val("");
+    }
+
+
+
+
+    $(".chat_button_area button").click(function() {
+      sendMessage();
+      $(".chat_input_area textarea").focus();
+    })
+
+
+    $(".chat_input_area textarea").keypress(function(event) {
+      if (event.keyCode == 13) {
+        if (!event.shiftKey) {
+          event.preventDefault();
+
+          sendMessage();
+        }
+      }
+    })
+
+    function enterChatingRoom(){
+
+      const nickname = document.querySelector("#input-name").value;
+      const roomNumber = document.querySelector("#roomNumber").value;
+      const character = document.querySelector("#character").value;
+
+      console.log("enterChatingRoom:");
+        console.log("nickname:" + nickname);
+        console.log("roomNumber:" + roomNumber);
+        const data = {
+          roomNumber : roomNumber,
+          nickname : nickname,
+          character : character
+        }
+
+        $.ajax({
+          url: "/chatingRoom-enter",
+          type: "GET",
+          data: data,
+        })
+                .then(function(room){
+                  initRoom(room, nickname);
+
+                  // 채팅방 참가 메세지
+                  room.message = nickname + "님이 참가하셨습니다";
+                  stomp.send(
+                          "/pub/socket/notification/" + roomNumber, {},
+                          JSON.stringify(room));
+
+                })
+                .fail(function(result){
+                  errorMSG(result);
+                })
+      }
+    $(".chat_back").click(function() {
+      const member = document.querySelector("#input-name").value;
+      const roomNumberInput = document.querySelector("#roomNumber").value;
+      const data = {
+        nickname : member,
+        roomNumber : roomNumberInput
+      };
+      swal({
+        text: "대화방에서 나갈까요?",
+        buttons: ["취소", "확인"]
+      })
+              .then(function (result) {
+                if (result) {
+                  $.ajax({
+                    url: "/chatingRoom-exitTest",
+                    type: "PATCH",
+                    data: JSON.stringify(data),
+                    contentType: 'application/json; charset=UTF-8',
+                    dataType: 'json'
+                  })
+                          .then(function (room) {
+                            const roomNumber = info.getRoomNumber();
+
+                            if (room.users.length != 0) {
+                              // 채팅방 나가기 메세지
+                              room.message = info.getNickname() + "님이 퇴장하셨습니다";
+                              stomp.send(
+                                      "/pub/socket/notification/" + roomNumber, {},
+                                      JSON.stringify(room));
+                            }
+
+                            // 채팅방 목록 업데이트
+                            stomp.send("/pub/socket/roomList");
+
+                            main();
+                            // 팝업창 닫기
+                            window.close();
+                          })
+                          .fail(function () {
+                            errorMSG();
+                          })
+                }
+              })
+    })
+
+
+    $(window).on('beforeunload', function(event) {
+      if (!isPageUnloading) {
+        isPageUnloading = true;
+        event.preventDefault(); // 기본 동작 취소
+        event.returnValue = ''; // 크로스 브라우저 호환성을 위해 추가
+        const member = document.querySelector("#input-name").value;
+        const roomNumberInput = document.querySelector("#roomNumber").value;
+        const data = {
+          nickname: member,
+          roomNumber: roomNumberInput
+        };
+        $.ajax({
+          url: "/chatingRoom-exitTest",
+          type: "PATCH",
+          data: JSON.stringify(data),
+          contentType: 'application/json; charset=UTF-8',
+          dataType: 'json'
+        })
+                .then(function(room) {
+                  const roomNumber = info.getRoomNumber();
+
+                  if (room.users.length != 0) {
+                    // 채팅방 나가기 메세지
+                    room.message = info.getNickname() + "님이 퇴장하셨습니다";
+                    stomp.send(
+                            "/pub/socket/notification/" + roomNumber, {},
+                            JSON.stringify(room)
+                    );
+                  }
+
+                  // 채팅방 목록 업데이트
+                  stomp.send("/pub/socket/roomList");
+
+                  main();
+                  // 팝업창 닫기
+                  window.close();
+                })
+                .fail(function() {
+                  errorMSG();
+                })
+                .always(function() {
+                  isPageUnloading = false;
+                });
+      } else {
+        return;
+      }
+    });
+// 대화 중이던 방
+    const chatingRoom = function (){
+      let returnRoom = null;
+
+      $.ajax({
+        url: "/chatingRoom",
+        type: "GET",
+        async: false,
+      })
+              .then(function(result){
+                if(result != "") {
+                  const room = result.chatingRoom;
+                  const nickname = result.myNickname;
+                  initRoom(room, nickname);
+                  returnRoom = result;
+                }
+              })
+              .fail(function(result){
+                //errorMSG(result);
+              })
+
+      return returnRoom;
+    };
+
+    stomp.connect({}, function(frame){
+      console.log('Connected: ' + frame);
+      main();
+      enterChatingRoom();
+    });
+  }) // document.ready
+</script>
+</body>
+</html>

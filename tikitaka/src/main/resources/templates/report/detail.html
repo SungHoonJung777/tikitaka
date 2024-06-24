@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, minimum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나  즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery-ui.js"></script>
+
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    <link rel="stylesheet" href="/css/base.css">
+</head>
+<body>
+<div class="wrap" layout:fragment="content">
+
+    <main class="content-area sub">
+        <div class="content-container">
+            <div class="report-detail">
+                <div class="report-detail-head">
+                    <div class="report-content">
+                        <div class="report-info">
+                            <div class="flag-list">
+                                <span class="flag-item gray">[[${quizinfo.school}]]</span>
+                                <span class="flag-item orange">퀴즈</span>
+                            </div>
+                            <h2 class="title">
+                                <span class="title-item state-end" th:if="${roominfo.status == 'e'}">진행완료</span>
+                                <span class="title-item state-ing" th:if="${roominfo.status == 's'}">진행중</span>
+                                <span class="title-item">[[${roominfo.title}]]</span>
+                            </h2>
+                        </div>
+                    </div>
+                    <div class="report-btn-group" th:if="${roominfo.status == 's'}">
+                        <button type="button" class="btn-type-gray" onclick="endreport()"><i class="ic-end"></i>과제 종료</button>
+                        <button type="button" class="btn-type-gray" id="open-dialog-url-share"><i class="ic-share2"></i>공유하기</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="list-heading">
+                <p class="total-count"><span class="ico-box"><i class="ic-person3"></i></span><span class="value">[[${#lists.size(dtolist)}]]</span> 명 참여 중</p>
+                <button type="button" class="btn-type-white size-sm" id="open-dialog-participant"><i class="ic-list2"></i>참여자 정보 </button>
+                <div class="storage-btn-group">
+                    <button type="button" class="btn-type-white size-sm" id="excel_down"><i class="ic-excel"></i>엑셀 다운로드</button>
+                    <button type="button" class="btn-type-white size-sm" th:if="${roominfo.status == 's'}"><i class="ic-modify"></i>과제수정</button>
+                    <button type="button" class="btn-type-white size-sm" onclick="deleteroom()"><i class="ic-del"></i>삭제</button>
+                </div>
+            </div>
+
+            <div class="box-line-gray">
+                <div class="box-flex">
+                    <div class="flex-title-area">
+                        <p class="title-a">자료정보</p>
+                    </div>
+                    <div class="flex-content-area">
+                        <div class="data-summery">
+                            <span class="data-summery-item"><span class="point">제목</span>: [[${roominfo.title}]]</span>
+                            <span class="data-summery-item"><span class="point">단원</span>: [[${result}]]</span>
+                            <span class="data-summery-item"><span class="point">생성일</span>: [[${#strings.substring(roominfo.regDate, 0, 10)}]]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box-line-blue mt-m">
+                <div class="box-flex">
+                    <div class="flex-title-area">
+                        <p class="title-a">과제정보</p>
+                        <i class="ic-info2"></i>
+                    </div>
+                    <div class="flex-content-area">
+                        <dl class="homework-item">
+                            <dt class="homework-title">마감일</dt>
+                            <dd class="homework-content">
+                                <span class="date-time" th:text="${roominfo.endDate}"></span>
+                            </dd>
+                        </dl>
+                        <dl class="homework-item">
+                            <dt class="homework-title">문구</dt>
+                            <dd class="homework-content" th:text="${roominfo.intro}"></dd>
+                        </dl>
+                        <dl class="homework-item">
+                            <dt class="homework-title">옵션</dt>
+                            <dd class="homework-content">[[${roominfo.continueYN}]]/[[${roominfo.scoreYN}]]/[[${roominfo.commentYN}]]</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- S : 퀴즈 -->
+            <div class="page-title-box">
+                <h3 class="title-b">참여자별 상세 리포트</h3>
+                <div class="col-right">
+                    <i class="ic-person4"></i>
+                    <p class="sub-info">전체 응시자 수 <span class="point">[[${#lists.size(dtolist)}]]</span></p>
+                </div>
+            </div>
+            <div class="list-table-b big">
+                <table>
+                    <colgroup>
+                        <col style="width:160px">
+                        <col style="width:calc((100% - 360px) / 4)" span="4">
+                        <col style="width:200px">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col">
+                            번호
+                            <button type="button" class="btn-sorting">
+                                <i class="ic-sorting-up"></i>
+                                <span class="for-a11y">오름차순</span>
+                            </button>
+                        </th>
+                        <th scope="col">참여자명</th>
+                        <th scope="col">정답 수</th>
+                        <th scope="col">
+                            점수
+                            <button type="button" class="btn-sorting">
+                                <i class="ic-sorting-down"></i>
+                                <span class="for-a11y">내림차순</span>
+                            </button>
+                        </th>
+                        <th scope="col">
+                            제출일
+                            <button type="button" class="btn-sorting">
+                                <i class="ic-sorting-down"></i>
+                                <span class="for-a11y">내림차순</span>
+                            </button>
+                        </th>
+                        <th scope="col">전체 응답</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${dtolist.isEmpty()}">
+                        <td colspan="6">데이터가 없습니다</td>
+                    </tr>
+                    <tr th:each="memberquiz, status:${dtolist}">
+                        <td>[[${status.count}]]</td>
+                        <td>[[${memberquiz.studentName}]]</td>
+                        <td>[[${memberquiz.studentCorrectCount}]]</td>
+                        <td>[[${memberquiz.studentTotalScore}]]</td>
+                        <td>[[${memberquiz.enterDate}]] </td>
+                        <td>
+                            <button type="button" class="btn-type-white size-sm" id="open-dialog-answer" th:onclick="viewmember([[${memberquiz.studentName.toString()}]])"><i class="ic-view"></i>보기</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="page-title-box">
+                <h3 class="title-b">문제별 상세 리포트</h3>
+                <div class="col-right">
+                    <i class="ic-q"></i>
+                    <p class="sub-info">전체 문항 수 <span class="point">[[${#lists.size(questioninfo)}]]</span></p>
+                </div>
+            </div>
+            <div class="list-table-b big">
+                <table>
+                    <colgroup>
+                        <col style="width:160px">
+                        <col style="width:calc((100% - 360px) / 3)" span="3">
+                        <col style="width:200px">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col">
+                            퀴즈번호
+                            <button type="button" class="btn-sorting">
+                                <i class="ic-sorting-up"></i>
+                                <span class="for-a11y">오름차순</span>
+                            </button>
+                        </th>
+                        <th scope="col">퀴즈유형</th>
+                        <th scope="col">문제</th>
+                        <th scope="col">정답자</th>
+                        <th scope="col">
+                            정답률
+                            <button type="button" class="btn-sorting">
+                                <i class="ic-sorting-down"></i>
+                                <span class="for-a11y">내림차순</span>
+                            </button>
+                        </th>
+                        <th scope="col">참여자별 정답여부</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${questioninfo.isEmpty()}">
+                        <td colspan="6">데이터가 없습니다</td>
+                    </tr>
+                    <tr th:each="question, status:${questioninfo}">
+                        <td>[[${status.count}]]</td>
+                        <td>단일선택</td>
+                        <td>[[${question.studentQuestion}]]</td>
+                        <td>[[${question.correct_count}]]</td>
+                        <td>[[${question.correct_persent}]]%</td>
+                        <td>
+                            <button type="button" class="btn-type-white size-sm" id="open-dialog-participant-answer" th:onclick="viewquestion([[${roominfo.roomIdx}]],[[${question.studentQuestion}]])"><i class="ic-view"></i>보기</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- E : 퀴즈 -->
+            <!-- E : 토의·토론 -->
+
+            <div class="btn-b-center">
+                <button type="button" class="btn-type-blue" onclick="location.href='/report/list'">목록</button>
+            </div>
+        </div>
+
+    </main>
+    <div title="참여자 정보" class="dialog-participant-answer">
+        <div class="dialog-title-box">
+            <h2 class="dialog-title-a"></h2>
+            <div class="dialog-title-form">
+                <span class="checkbox-a">
+                    <input type="checkbox" class="checkbox-form" id="correct-chk" onchange="correct(this)" checked>
+                    <label for="correct-chk" class="checkbox-txt">정답자만</label>
+                </span>
+                <span class="checkbox-a">
+                    <input type="checkbox" class="checkbox-form" id="incorrect-chk" checked>
+                    <label for="incorrect-chk" class="checkbox-txt">오답자만</label>
+                </span>
+            </div>
+        </div>
+        <div class="list-table-b">
+            <table>
+                <colgroup>
+                    <col style="width:50%">
+                    <col style="width:auto">
+                <thead>
+                <tr>
+                    <th scope="col">
+                        참여자명
+                        <button type="button" class="btn-sorting">
+                            <i class="ic-sorting-up"></i>
+                            <span class="for-a11y">오름차순</span>
+                        </button>
+                    </th>
+                    <th scope="col">정답여부</th>
+                </tr>
+                </thead>
+                <tbody id = "question_detail">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div title="참여자 정보" class="dialog-participant">
+        <div class="list-table-b">
+            <table>
+                <colgroup>
+                    <col style="width:124px">
+                    <col style="width:auto">
+                    <col style="width:200px">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">
+                        참여자명
+                        <button type="button" class="btn-sorting">
+                            <i class="ic-sorting-up"></i>
+                            <span class="for-a11y">오름차순</span>
+                        </button>
+                    </th>
+                    <th scope="col">비밀번호</th>
+                    <th scope="col">
+                        참가일
+                        <button type="button" class="btn-sorting">
+                            <i class="ic-sorting-down"></i>
+                            <span class="for-a11y">내림차순</span>
+                        </button>
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${dtolist.isEmpty()}">
+                    <td colspan="3">데이터가 없습니다</td>
+                </tr>
+                <tr th:each="memberinfo, status:${dtolist}">
+                    <td>[[${memberinfo.studentName}]]</td>
+                    <td>[[${memberinfo.studentPassword}]]</td>
+                    <td>[[${memberinfo.enterDate}]]</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div title="전체 응답" class="dialog-answer">
+        <h2 class="dialog-title-a">홍길동</h2>
+        <div class="list-table-b">
+            <table>
+                <colgroup>
+                    <col style="width:90px">
+                    <col style="width:auto">
+                    <col style="width:140px">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">
+                        번호
+                        <button type="button" class="btn-sorting">
+                            <i class="ic-sorting-up"></i>
+                            <span class="for-a11y">오름차순</span>
+                        </button>
+                    </th>
+                    <th scope="col">퀴즈</th>
+                    <th scope="col">답변</th>
+                </tr>
+                </thead>
+                <tbody id="member_detail">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div title="공유정보" class="dialog-url-share">
+        <div class="make-title-box">
+            <div class="box-flex">
+                <div class="flag-list">
+                    <span class="flag-item gray">초등</span>
+                    <span class="flag-item blue">워크시트</span>
+                </div>
+                <p class="make-title">같이 학습지를 풀어봅시다. </p>
+            </div>
+        </div>
+        <div class="gray-box-b">
+            <div class="make-item">
+                <p class="title">URL</p>
+                <div class="make-form">
+                    <input type="text" class="inp-b" value="https://testtestetstetst....">
+                    <button type="button" class="btn-type-darkgray size-sm">복사</button>
+                </div>
+            </div>
+            <p class="txt-or">or</p>
+            <div class="make-item">
+                <p class="title">입장코드 </p>
+                <div class="make-form">
+                    <input type="text" class="inp-b" value="1A2B3C">
+                    <button type="button" class="btn-type-darkgray size-sm">복사</button>
+                </div>
+            </div>
+            <p class="dot-txt">URL 주소를 브라우저에 입력하거나 입장하기 페이지에서 입장 코드를 입력하시면 입장이 가능합니다.</p>
+        </div>
+    </div>
+    <form name="deletefrm" id="deletefrm" action="/report/deletereport" method="post">
+        <input type="hidden" name="roomIdx" th:value="${roominfo.roomIdx}"/>
+    </form>
+</div>
+<script layout:fragment="script">
+    let room_Idx = [[${roominfo.roomIdx}]];
+    $('#excel_down').click(function(event){
+        window.location.href = "/report/detaildown?roomIdx="+[[${roominfo.roomIdx}]];
+    })
+    $( ".dialog-answer" ).dialog({
+        autoOpen: false,
+        dialogClass: "basic-type dialog-grid-d",
+        width: 623,
+        modal: true,
+        resizable:true
+    });
+    $( ".dialog-participant" ).dialog({
+        autoOpen: false,
+        dialogClass: "basic-type dialog-grid-d",
+        width: 623,
+        modal: true,
+        resizable:true
+    });
+    $( ".dialog-participant-answer" ).dialog({
+        autoOpen: false,
+        dialogClass: "basic-type dialog-grid-d",
+        width: 623,
+        modal: true,
+        resizable:true
+    });
+    $( ".dialog-url-share" ).dialog({
+        autoOpen: false,
+        dialogClass: "basic-type dialog-grid-b",
+        width: 700,
+        modal: true,
+        resizable:true
+    });
+    $( "#open-dialog-url-share" ).click(function( event ) {
+        $( ".dialog-url-share" ).dialog( "open" );
+        event.preventDefault();
+    });
+    function viewquestion(roomIdx, question){
+        document.getElementById("question_detail").innerHTML="";
+        $.ajax({
+            type: "POST",            // HTTP method type(GET, POST) 형식이다.
+            url: "/report/question",      // 컨트롤러에서 대기중인 URL 주소이다.
+            data: {
+                roomIdx: roomIdx,
+                question: question
+            },            // Json 형식의 데이터이다.
+            success: function (result) { // 비동기통신의 성공일경우 success콜백으로 들어옵니다. 'res'는 응답받은 데이터이다.
+                let table = document.getElementById("question_detail");
+                if(result.length == 0){
+                    table.innerHTML="<tr><td colspan='2'>데이터가 없습니다</td></tr>"
+                }
+                for(let list in result){
+                    let trElement = document.createElement("tr");
+                    for(let i = 0; i<2; i++) {
+                        let tdElement = document.createElement("td");
+                        if(i == 0){
+                            tdElement.innerHTML = result[list].studentName;
+                        }else{
+                            tdElement.innerHTML = result[list].studentAnswerYN;
+                            if(result[list].studentAnswerYN == "O") {
+                                trElement.setAttribute("name", "correct");
+                            }else{
+                                trElement.setAttribute("name", "incorrect");
+                            }
+                        }
+                        trElement.append(tdElement)
+                    }
+                    table.append(trElement);
+                }
+                $( ".dialog-participant-answer" ).dialog( "open" );
+            },
+            error: function (error) { // 비동기 통신이 실패할경우 error 콜백으로 들어옵니다.
+                console.log(error);
+            }
+        });
+    }
+    function viewmember(studentName){
+        document.getElementById("member_detail").innerHTML="";
+        $.ajax({
+            type: "POST",            // HTTP method type(GET, POST) 형식이다.
+            url: "/report/member",      // 컨트롤러에서 대기중인 URL 주소이다.
+            data: {
+                roomIdx: room_Idx,
+                studentName: studentName
+            },            // Json 형식의 데이터이다.
+            success: function (result) { // 비동기통신의 성공일경우 success콜백으로 들어옵니다. 'res'는 응답받은 데이터이다.
+                let table = document.getElementById("member_detail");
+                for(let list in result){
+                    let trElement = document.createElement("tr");
+                    for(let i = 0; i<3; i++) {
+                        let tdElement = document.createElement("td");
+                        if(i == 0){
+                            tdElement.innerHTML = parseInt(list)+1;
+                        }else if(i == 1) {
+                            tdElement.innerHTML = result[list].studentQuestion;
+                        }else{
+                            tdElement.innerHTML = result[list].studentAnswer;
+                        }
+                        trElement.append(tdElement)
+                    }
+                    table.append(trElement);
+                }
+                $(".dialog-answer" ).dialog( "open" );
+            },
+            error: function (error) { // 비동기 통신이 실패할경우 error 콜백으로 들어옵니다.
+                console.log(error);
+            }
+        });
+    }
+    $( "#open-dialog-participant" ).click(function( event ) {
+        $( ".dialog-participant" ).dialog( "open" );
+        event.preventDefault();
+    });
+    function correct(el){
+        let element = document.getElementById("question_detail");
+        console.log(element);
+        if(el.chcecked){
+            for(let i = 0; i<elements.length;i++){
+                elements[i].display="block";
+            }
+        }else{
+            for(let i = 0; i<=elements.length;i++){
+                console.log(elements);
+                elements[i].remove();
+            }
+        }
+    }
+    function endreport(){
+        if(confirm("종료하시겠습니까?")) {
+            $.ajax({
+                type: "POST",            // HTTP method type(GET, POST) 형식이다.
+                url: "/report/endreport",      // 컨트롤러에서 대기중인 URL 주소이다.
+                data: {
+                    roomIdx: room_Idx
+                },            // Json 형식의 데이터이다.
+                success: function (result) { // 비동기통신의 성공일경우 success콜백으로 들어옵니다. 'res'는 응답받은 데이터이다.
+
+                },
+                error: function (error) { // 비동기 통신이 실패할경우 error 콜백으로 들어옵니다.
+                    console.log(error);
+                }
+            });
+        }
+    }
+    function deleteroom(){
+        if(confirm("삭제하시겠습니까?")) {
+            let frm = document.deletefrm;
+            console.log(frm);
+            frm.submit();
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나 즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery-ui.js"></script>
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    <link rel="stylesheet" href="/css/student.css">
+    <script src="/js/stomp.umd.min.js"></script>
+    <script src="/js/websocketSGamesStomp.js"></script>
+    <script src="/js/quizRendering.js"></script>
+</head>
+<body id="body">
+<div class="wrap">
+    <header class="header">
+        <div class="header-title">
+            <div class="title-group">게임하기</div>
+            <h2 class="title">같이 게임을 해봅시다</h2>
+        </div>
+    </header>
+    <main class="go-in-content">
+        <div class="content-label">
+            <span class="label-gray">초등</span>
+            <span class="label-quiz">퀴즈</span>
+        </div>
+        <div class="go-in-form">
+            <div class="form-group">
+                <div class="form-title">
+                    <i class="ic-children"></i>
+                    <h3 class="title">나도 참여할래요.</h3>
+                </div>
+                <div class="form-item">
+                    <div class="input-wrap">
+                        <label for="studentName" class="input-label-icon"><i class="ic-name"></i></label>
+                        <input type="text" id="studentName" class="input-line" placeholder="이름" required maxlength="20">
+                    </div>
+                    <p class="error-text">
+                        <i class="ic-warning"></i>
+                        이름은 꼭 입력해주세요.
+                    </p>
+                </div>
+                <div class="form-item">
+                    <div class="input-wrap">
+                        <label for="studentPassword" class="input-label-icon"><i class="ic-password"></i></label>
+                        <input type="password" id="studentPassword" class="input-line" placeholder="참여자 비밀번호" required maxlength="4">
+                    </div>
+                    <p class="guide-text">4자리 이하 비밀번호를 입력해주세요.</p>
+                </div>
+            </div>
+        </div>
+        <div class="form-btn">
+            <button onclick="namePwdEnter()" type="button" class="btn-type-black"><span class="btn-txt">시작하기</span></button>
+        </div>
+    </main>
+</div>
+</body>
+<script th:inline="javascript">parseDTO([[${quizRoomDTO}]],[[${quizDTO}]],[[${QuizDetailDTOList}]])</script>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, minimum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나  즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+    <script th:src="@{/js/swiper-bundle.min.js}"></script>
+
+
+
+
+</head>
+<body>
+<div class="wrap" layout:fragment="content">
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/swiper-bundle.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <script>
+        $( function() {
+            $( ".main-tabs" ).tabs();
+        } );
+
+        function searchLibraries() {
+            const title = $("#title").val().trim();
+            const form = document.getElementById("searchForm");
+            if (!title) {
+                alert("검색어를 입력해주세요");
+                $("#title").focus;
+            } else {
+                location.href="/main2?search_word="+title;
+            }
+        }
+
+    </script>
+    <main class="content-area">
+        <form id="searchForm" onsubmit="return false;" autocomplete="off">
+        <div class="sh-area">
+
+            <input type="text" class="sh-input" placeholder="검색어를 입력해주세요" name="title" id="title">
+            <button type="button" class="btn-sh" onclick="searchLibraries()"><span class="for-a11y">검색</span></button>
+
+        </div>
+        </form>
+
+        <div class="main-visual">
+
+            <div class="wrap-slide-box">
+                <div class="swiper-button-next"></div>
+                <div class="swiper-container">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide slide01" tabindex="-1">
+                            <img src="/images/main/main-img1.png" alt="">
+                            <!--<div class="slide-content">
+                                <p class="slide-title">온, 오프라인에 활용할 수 있는  <br>수업 소통 도구 핑퐁 </p>
+                                <p class="slide-desc">온라인에서도 오프라인에서도, 디바이스만 있다면 누구나 <br>즐겁게 수업에 참여할 수 있는 소통 도구 핑퐁을 만나보세요.</p>
+                            </div>-->
+                        </div>
+                        <div class="swiper-slide slide02" tabindex="-1">
+                            <img src="/images/main/main-img2.png" alt="">
+                            <!--<div class="slide-content">
+                                <p class="slide-title">다양한 수업환경에서 <br>사용할 수 있어요.</p>
+                                <p class="slide-desc">교사가 사전에 제작한 과제물을 링크 또는 코드로 간편하게 공유하고 <br>학생은 링크를 통해 온, 오프라인 수업에서 과제진행이 가능해요.</p>
+                            </div>-->
+                        </div>
+                        <div class="swiper-slide slide03" tabindex="-1">
+                            <img src="/images/main/main-img3.png" alt="">
+                            <!--<div class="slide-content">
+                                <p class="slide-title">원하는 수업자료를 <br>간편하게 제작할 수 있어요.</p>
+                                <p class="slide-desc">여러 저작도구와 천재 교육에서 제공하는 다양한 콘텐츠들을 <br>활용하여 높은 퀄리티의 수업자료를 만들 수 있어요.</p>
+                            </div>-->
+                        </div>
+                    </div>
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-pagination"></div>
+                    <div class="wrap-autoplay-control">
+                        <button aria-pressed="false" aria-label="자동 재생 일시정지"></button>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <div class="content-container">
+            <!--<div class="class-date-make">
+                <h2 class="title"><i class="ic-pencil"></i>수업자료 만들기</h2>
+                <div class="make-list">
+                    <button type="button" class="btn-make-item">
+                        <i class="ic-main1"></i>
+                        <span class="make-title">
+                            <span class="value">워크시트 <br>만들기</span>
+                        </span>
+                    </button>
+                    <button type="button" class="btn-make-item">
+                        <i class="ic-main2"></i>
+                        <span class="make-title">
+                            <span class="value">퀴즈 <br>만들기</span>
+                        </span>
+                    </button>
+                    <button type="button" class="btn-make-item">
+                        <i class="ic-main3"></i>
+                        <span class="make-title">
+                            <span class="value">토의<span class="dot"></span>토론 <br>만들기</span>
+                        </span>
+                    </button>
+                    <button type="button" class="btn-make-item" disabled>
+                        <i class="ic-main4"></i>
+                        <span class="make-title">
+                            <span class="ready">슬라이드 <br>만들기</span>
+                            <span class="ready-hover">하반기  <br>오픈예정</span>
+                        </span>
+                    </button>
+                </div>
+            </div>-->
+            <div class="main-tabs">
+<!--                <ul>-->
+<!--                    <li><a href="#main-tabs1">전체</a></li>-->
+<!--                    <li><a href="#main-tabs2">공통</a></li>-->
+<!--                    <li><a href="#main-tabs3">초등</a></li>-->
+<!--                    <li><a href="#main-tabs4">중등</a></li>-->
+<!--                    <li><a href="#main-tabs5">고등</a></li>-->
+<!--                </ul>-->
+                <div id="main-tabs1">
+                    <div class="sub-title-box">
+                        <h2 class="main-sub-title">6월, 필통 BEST 콘텐츠</h2>
+                        <a th:href="|@{/main2(order='likeCnt')}|" class="link-more">더보기</a>
+                    </div>
+                    <!-- S : card list -->
+                    <div class="card-list">
+                        <!-- S : card item -->
+                        <div class="card-item" th:each="dto:${likeList}">
+                            <a th:href="|@{/quiz/detail}?quizIdx=${dto.quizIdx}|" class="link-card">
+                                <div class="card-img">
+                                    <div class="flag-list">
+                                        <th:block th:switch="${dto.school}">
+                                            <span class="flag-item purple" th:case="${'E'}">초등</span>
+                                            <span class="flag-item green" th:case="${'M'}">중등</span>
+                                            <span class="flag-item orange" th:case="${'H'}">고등</span>
+                                        </th:block>
+                                        <span class="flag-item blue">퀴즈</span>
+                                    </div>
+                                    <img th:src="${dto.thumbnail}" alt="이미지">
+                                </div>
+                                <div class="card-content">
+                                    <p class="card-title">[[${dto.title}]]</p>
+                                    <div class="card-data">
+                                        <p class="name"><span class="name-value">[[${dto.name}]]</span>선생님</p>
+                                        <p class="date"> [[${dto.regDate}]]</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <!-- E : card list -->
+                    <div class="sub-title-box">
+                        <h2 class="main-sub-title">6월, 필통 NEW 콘텐츠</h2>
+                        <a th:href="|@{/main2(order='regDate')}|" class="link-more">더보기</a>
+                    </div>
+                    <!-- S : card list -->
+                    <div class="card-list">
+                        <!-- S : card item -->
+                        <div class="card-item" th:each="dto:${regDateList}">
+                            <a th:href="|@{/quiz/detail}?quizIdx=${dto.quizIdx}|" class="link-card">
+                                <div class="card-img">
+                                    <div class="flag-list">
+                                        <th:block th:switch="${dto.school}">
+                                            <span class="flag-item purple" th:case="${'E'}">초등</span>
+                                            <span class="flag-item green" th:case="${'M'}">중등</span>
+                                            <span class="flag-item orange" th:case="${'H'}">고등</span>
+                                        </th:block>
+                                        <span class="flag-item blue">퀴즈</span>
+                                    </div>
+                                    <img th:src="${dto.thumbnail}" alt="이미지" onerror="this.src='/images/icon/ic-logo.png'">
+                                </div>
+                                <div class="card-content">
+                                    <p class="card-title">[[${dto.title}]]</p>
+                                    <div class="card-data">
+                                        <p class="name"><span class="name-value">[[${dto.name}]]</span>선생님</p>
+                                        <p class="date"> [[${dto.regDate}]]</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <!-- E : card list -->
+                </div>
+<!--                <div id="main-tabs2">-->
+<!--                    tab2-->
+<!--                </div>-->
+<!--                <div id="main-tabs3">-->
+<!--                    tab3-->
+<!--                </div>-->
+<!--                <div id="main-tabs4">-->
+<!--                    tab4-->
+<!--                </div>-->
+<!--                <div id="main-tabs5">-->
+<!--                    tab5-->
+<!--                </div>-->
+            </div>
+
+<!--            <div class="go-in-box">-->
+<!--                <input type="text" class="input-go-in" placeholder="입장코드 입력">-->
+<!--                <button type="button" class="btn-go-in">바로 입장하기</button>-->
+<!--            </div>-->
+
+
+        </div>
+    </main>
+</div>
+
+    <script layout:fragment="script" th:inline="javascript">
+        let thisSlide,
+            autoPlayBtn,
+            autoPlayState;
+        new Swiper('.swiper-container', {
+            slidesPerView: 1,
+            autoplay: {
+                delay: 3000,
+            },
+            navigation: {
+                nextEl: '.wrap-slide-box .swiper-button-next',
+                prevEl: '.wrap-slide-box .swiper-button-prev',
+            },
+            loop: true,
+            pagination: {
+                el: ".swiper-pagination",
+                type: "fraction",
+            },
+            a11y: {
+                prevSlideMessage: '이전 슬라이드',
+                nextSlideMessage: '다음 슬라이드',
+                slideLabelMessage: '총 {{slidesLength}}장의 슬라이드 중 {{index}}번 슬라이드 입니다.',
+            },
+            on: {
+                init: function () {
+                    thisSlide = this;
+                    autoPlayBtn = document.querySelector('.wrap-autoplay-control > button');
+                    autoPlayBtn.addEventListener('click', (e) => {
+                        autoPlayState = autoPlayBtn.getAttribute('aria-pressed');
+                        if (autoPlayState === 'false') {
+                            autoPlayBtn.setAttribute('aria-pressed', 'true');
+                            thisSlide.autoplay.stop();
+                        } else if (autoPlayState === 'true') {
+                            autoPlayBtn.setAttribute('aria-pressed', 'false');
+                            thisSlide.autoplay.start();
+                        }
+                    });
+                },
+            },
+        });
+    </script>
+
+</body>
+</html>

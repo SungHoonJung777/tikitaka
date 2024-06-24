@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="kr" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<meta charset="utf-8">
+
+
+<div class="wrap"  layout:fragment="content">
+    <link rel="stylesheet" th:href="@{/css/submain.css}">
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/CookieUtil.js}"></script>
+    <script>
+
+        function login() {
+            const userId = $("#userId").val().trim();
+            const password = $("#password").val().trim();
+
+            if (!userId) {
+                alert("아이디를 입력해주세요");
+                return false;
+            }
+            if (!password) {
+                alert("비밀번호를 입력해주세요");
+                return false;
+            }
+
+            const param = {
+                userId: userId,
+                password: password,
+                saveId: $("#saveId").is(":checked") ? "Y" : "N"
+            };
+
+            $.ajax({
+                url: "/login",
+                data: param,
+                type: "POST",
+                success: function(res) {
+                    if (res == "ok") {
+                        location.href="/";
+                    } else {
+                        alert("사용자 정보가 일치하지 않습니다.");
+                    }
+                },
+                error : function(xhr, status, error) {
+                    window.alert("사용자 정보가 일치하지 않습니다.");
+                    console.log("xhr! : " + xhr);
+                    console.log("status! : " + status);
+                    console.log("error! : " + error);
+
+                }
+            });
+        }
+
+    </script>
+    <div class="container login">
+        <div class="text-box">
+            <p>T셀파 계정으로 로그인 해주세요! </p>
+            <span>클래스핑퐁은 T셀파 계정이 있으신 선생님이라면 누구나 사용 가능합니다.</span>
+        </div>
+        <div class="input-form">
+            <input type="text" name="userId" id="userId" placeholder="아이디를 입력해 주세요" th:value="${loginId}">
+            <input type="password" name="password" id="password" placeholder="비밀번호를 입력해 주세요" >
+            <span class="checkbox-a">
+                <input type="checkbox" class="checkbox-form" id="saveId" name="saveId" value="Y" th:checked="${saveCheck}">
+                <label class="checkbox-txt" for="saveId">아이디 저장</label>
+              </span>
+        </div>
+        <div class="link-box">
+        </div>
+        <a href="javascript:login();" class="btn-type-blue size-lg btn-login">로그인</a>
+    </div>
+
+</div>
+</html>

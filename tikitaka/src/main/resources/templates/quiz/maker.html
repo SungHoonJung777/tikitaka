@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ko" layout:decorate="~{layout.html}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>워크시트 만들기</title>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+</head>
+<body>
+<div class="wrap">
+    <th:block layout:fragment="content">
+        <form id="makerFrm" name="makerFrm" method="post" action="/quiz/maker" enctype="multipart/form-data">
+            <input type="hidden" name="keyword" id="hiddenKeyword">
+            <input type="hidden" name="memberIdx" th:value="${session.memberIdx}">
+            <input type="hidden" name="name" th:value="${session.name}">
+
+            <main class="create-area">
+                <div class="content-container">
+                    <div class="create-header-group">
+                        <div class="create-header-col">
+                            <button class="btn-type-dark" type="button" onclick="window.location.href='/'">
+                                <i class="ic-close"></i>
+                                <span class="btn-txt">닫기</span>
+                            </button>
+                        </div>
+                        <div class="create-header-col">
+                            <button class="btn-type-dark" type="button" id="submitBtn1">
+                                <i class="ic-next"></i>
+                                <span class="btn-txt">다음단계</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-wrap">
+                        <div class="form-table">
+                            <table>
+                                <colgroup>
+                                    <col style="width:144px">
+                                    <col style="width:371px">
+                                    <col style="width:144px">
+                                    <col style="width:auto">
+                                </colgroup>
+                                <tbody>
+                                <tr>
+                                    <th rowspan="3" scope="row">
+                                        제목
+                                        <em class="essential"></em>
+                                    </th>
+                                    <td colspan="3">
+                                        <input class="inp-a" placeholder="워크시트 제목을 입력해주세요." type="text" name="title">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td rowspan="2">
+                                        <div class="thumbnail-form">
+                                            <div class="thumbnail-box">
+                                                <div class="thumbnail-box">
+                                                    <input type="file" id="thumbnail-img" name="thumbnail-img" accept="image/gif, image/jpeg, image/png" style="display:none">
+                                                    <div id="preview-img-div" class="thumbnail-guide">
+                                                        <i class="ic-thumbnail" style=""></i>
+                                                        <p class="guide-txt" style="">썸네일을 등록해주세요.<br>
+                                                            * 권장 사이즈(586×400px)가 아닐 경우<br>
+                                                            가장자리에 흰 여백이 생길 수 있습니다.<br>
+                                                            * 미등록 시, 기본 썸네일이 노출됩니다.</p>
+
+                                                    </div>
+                                                    <button type="button" class="btn-del" onclick="thumbnailReset()" style="display: none;">
+                                                        <i class="ic-in-del2"></i>
+                                                        <span class="for-a11y">삭제</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="btn-box">
+                                                <button class="btn-type-blue size-sm" type="button" onclick="thumbnailSelect()">
+                                                    <span class="btn-txt">PC에서 등록하기</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <th class="line" scope="row">
+                                        공유 여부<em class="essential"></em>
+                                    </th>
+                                    <td>
+                                        <div class="form-group pd-tb10">
+                                            <div class="form-item">
+                                                <span class="radio-a">
+                                                    <input type="radio" class="radio-form" id="radio1-1" name="share" value="Y" checked>
+                                                    <label class="radio-txt" for="radio1-1">공유 할게요</label>
+                                                </span>
+                                            </div>
+                                            <div class="form-item">
+                                                <span class="radio-a">
+                                                    <input type="radio" class="radio-form" id="radio1-2" name="share" value="N">
+                                                    <label class="radio-txt" for="radio1-2">공유하고 싶지 않아요</label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="share-guide-txt">
+                                            <span>* 다른 선생님이 공유한 자료들과 함께 노출됩니다.<br></span>
+                                            <span>* 본 자료는 T셀파 서비스에 공유 될 수 있습니다.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="line" scope="row">설명</th>
+                                    <td>
+                                        <textarea class="textarea-a" name="comment" placeholder="워크시트 설명 또는 출처를 작성해주세요." style="height:225px"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">키워드</th>
+                                    <td colspan="3">
+                                        <input class="inp-a" placeholder="#최대 10개 까지 작성 가능합니다. (작성 후 엔터)" type="text" id="keyword">
+                                        <div class="keyword-group" id="keywordText">
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">
+                                        학교급
+                                        <em class="essential"></em>
+                                    </th>
+                                    <td colspan="3">
+                                        <div class="form-group">
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio3-2" name="school" type="radio" value="E" onchange="validateSubject()">
+                                                <label class="radio-txt" for="radio3-2">초등</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio3-3" name="school" type="radio" value="M" onchange="validateSubject()">
+                                                <label class="radio-txt" for="radio3-3">중등</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio3-4" name="school" type="radio" value="H" onchange="validateSubject()">
+                                                <label class="radio-txt" for="radio3-4">고등</label>
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="grade-term-row">
+                                    <th scope="row">
+                                        학년
+                                    </th>
+                                    <td colspan="3">
+                                        <div class="form-group">
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio4-1" name="grade" type="radio" value="1" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio4-1">1학년</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio4-2" name="grade" type="radio" value="2" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio4-2">2학년</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio4-3" name="grade" type="radio" value="3" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio4-3">3학년</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio4-4" name="grade" type="radio" value="4" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio4-4">4학년</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio4-5" name="grade" type="radio" value="5" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio4-5">5학년</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio4-6" name="grade" type="radio" value="6" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio4-6">6학년</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio4-7" name="grade" type="radio" value="0" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio4-7">공통</label>
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="semester-term-row">
+                                    <th scope="row">학기</th>
+                                    <td colspan="3">
+                                        <div class="form-group">
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio5-1" name="semester" type="radio" value="1" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio5-1">1학기</label>
+                                            </span>
+                                            <span class="radio-a">
+                                                <input class="radio-form" id="radio5-2" name="semester" type="radio" value="2" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio5-2">2학기</label>
+                                            </span>
+                                            <span class="radio-a" style="display: none">
+                                                <input class="radio-form" id="radio5-3" name="semester" type="radio" value="0" onchange="commonCk()">
+                                                <label class="radio-txt" for="radio5-3">공통</label>
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="subject-term-row">
+                                    <th scope="row">과목</th>
+                                    <td colspan="3">
+                                        <div class="select-group" >
+                                            <div class="select-a">
+                                                <select name="subject" id="subject" disabled>
+                                                    <option selected value="">과목 선택</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="chapter-term-row" style="display:none;">
+                                    <th scope="row">단원</th>
+                                    <td colspan="3">
+                                        <div class="select-group">
+                                            <div class="select-a">
+                                                <select name="chapter" id="largeChapter"  disabled style="display: none;">
+                                                    <option selected value="">대단원 선택</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="mediumChapter-term-row" style="display:none;">
+                                    <th scope="row">중단원</th>
+                                    <td colspan="3">
+                                        <div class="select-group">
+                                            <div class="select-a">
+                                                <select name="mediumChapter" id="mediumChapter"  disabled style="display: none;">
+                                                    <option selected value="">중단원 선택</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="chaxi-term-row" style="display:none;">
+                                    <th scope="row">차시</th>
+                                    <td colspan="3">
+                                        <div class="select-group">
+                                            <div class="select-a">
+                                                <select name="chaxi" id="chaxi" disabled style="display: none;">
+                                                    <option selected value="">차시 선택</option>
+                                                </select>
+                                            </div>
+                                            <button class="btn-type-blue size-sm" type="button" onclick="resetAllSelections();">
+                                                <span class="btn-txt">초기화</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">첨부파일</th>
+                                    <td colspan="3">
+                                        <div class="file-form" style="display: flex">
+                                            <input class="inp-a" placeholder="파일 등록 시 라이브러리에서 해당 파일 다운로드 가능합니다./최대 5MB까지 첨부 가능/ 최대 첨부 가능 개수:1개" readonly style="border: none" type="text">
+                                            <div class="btn-box read-file-select">
+                                                <input accept="application/pdf" id="readFile-elem" name="readFile" style="display:none" type="file">
+                                                <button class="btn-type-blue size-sm " id="readFile-select" onclick="readFileSelect()" type="button">
+                                                    <span class="btn-txt">PC에서 등록하기</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="file-box" id="readFile-content" style="display: none">
+                                            <div class="read-file-group">
+                                                <div class="read-file-item">
+                                                    <span class="readFile"></span>
+                                                    <button class="btn-del" onclick="resetReadPdf()" type="button">
+                                                        <i class="ic-readFile-del"></i>
+                                                        <span class="for-a11y">파일 전체삭제</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="display:flex; justify-content: center; margin:10px">
+                            <button class="btn-type-dark" type="button" id="submitBtn2">
+                                <i class="ic-next"></i>
+                                <span class="btn-txt">다음단계</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </form>
+        <div title="미디어 추가" class="dialog-media">
+            <form name="fileFo" id="fileFo">
+                <div class="form-table">
+                    <table>
+                        <colgroup>
+                            <col style="width:100px">
+                            <col style="width:auto">
+                        </colgroup>
+                        <tbody>
+                        <tr>
+                            <th scope="row">직접 찾기</th>
+                            <td>
+                                <div class="btn-box">
+                                    <button type="button" class="btn-type-blue size-sm" id="questionMedia" onclick="thumbnailByPc()">
+                                        <span class="btn-txt">PC에서 등록하기</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </th:block>
+
+    <th:block layout:fragment="script">
+        <script>
+            $('#submitBtn1').click(function() {
+                if($('input[type="text"][name="title"]').val() === "") {
+                    alert("제목을 입력해주세요.");
+                    return false;
+                } else {
+                    $('#makerFrm').submit();
+                }
+            });
+            $('#submitBtn2').click(function() {
+                if($('input[type="text"][name="title"]').val() === "") {
+                    alert("제목을 입력해주세요.");
+                    return false;
+                } else {
+                    $('#makerFrm').submit();
+                }
+            });
+
+            $(".tooltip-wrap .btn-help").click(function () {
+                $(this).closest(".tooltip-wrap").toggleClass("is-open");
+            });
+            $(".tooltip .btn-tooltip-close").click(function () {
+                $(this).closest(".tooltip-wrap").removeClass("is-open");
+            });
+            $(".select-a select").selectmenu();
+
+            $( ".dialog-media" ).dialog({
+                autoOpen: false,
+                dialogClass: "basic-type dialog-grid-a",
+                width: 488,
+                modal: true,
+                resizable:true,
+                buttons: [
+                    {
+                        text: "추가",
+                        click: function() {
+                            $( this ).dialog( "close" );
+                        }
+                    }
+                ],
+                close: function() {
+                }
+            });
+
+            function thumbnailSelect() {
+                $(".dialog-media").dialog("open");
+                event.preventDefault();
+            }
+
+            function thumbnailByPc(){
+                const thumbnail = document.getElementById("thumbnail-img");
+
+                thumbnail.click();
+
+                thumbnail.onchange = function (e) {
+                    const maxSize = 5 * 1024 * 1024;
+                    if (e.target.files.length !== 0 && e.target.files[0].size > maxSize) {
+                        alert("최대 5MB까지 첨부 가능 합니다.");
+                        return;
+                    }
+
+                    $("#preview-img-div").find("img").remove();
+                    const reader = new FileReader();
+
+                    reader.onload = function (event) {
+                        const img = document.createElement("img");
+                        img.setAttribute("src", event.target.result);
+                        document.querySelector("div#preview-img-div").appendChild(img);
+                        $(".dialog-media").dialog("close");
+                    }
+
+                    if (e.target.files.length !== 0){
+                        reader.readAsDataURL(e.target.files[0]);
+                        $(".ic-thumbnail").hide();
+                        $(".guide-txt").hide();
+                        $(".thumbnail-box").find(".btn-del").show();
+                    } else {
+                        $(".ic-thumbnail").show();
+                        $(".guide-txt").show();
+                        $(".thumbnail-box").find(".btn-del").hide();
+                    }
+
+                }
+            }
+
+            function readFileSelect() {
+                const readFile = document.getElementById('readFile-elem');
+                readFile.click();
+                readFile.onchange = async function (e) {
+                    const fileName = document.getElementById("readFile-elem").files[0].name;
+                    $(".readFile").text(fileName);
+                    $("#readFile-content").css("display", "block");
+                }
+            }
+
+            function resetReadPdf() {
+                $(".readFile").text("");
+                $("#readFile-elem").val("");
+                $("#readFile-content").css("display", "none");
+                $('#aform').find('input[name=readFilePath]').each(function (i, item) {
+                    item.value = "delete";
+                });
+            }
+
+            function thumbnailReset() {
+                $("#preview-img-div").find("img").remove();
+                $(".ic-thumbnail").show();
+                $(".guide-txt").show();
+                $(".thumbnail-box").find(".btn-del").hide();
+                const files = document.getElementById("thumbnail-img");
+                $("#thumbnail-img").val("");
+                $("input[name=thumbnailPath]").val("delete");
+            }
+
+            let array = [];
+            const makerFrm = document.getElementById("makerFrm");
+            const keyword = document.getElementById("keyword");
+            keyword.addEventListener("keydown", (e) => {
+                if (e.keyCode == "13") {
+                    const keywordTxt = keyword.value.trim();
+
+                    if (!keywordTxt.replace(/(^\s*)|(\s*$)/gi, "")) {
+                        alert("키워드를 입력해주세요");
+                        return;
+                    }
+                    let reg = /\,/g;
+                    if (reg.test(keywordTxt)) {
+                        alert("쉼표는 입력 할 수 없습니다.");
+                        return;
+                    }
+
+                    if (document.getElementsByClassName("keyword-item").length > 9) {
+                        alert("키워드는 10개까지 등록 가능합니다.");
+                        return;
+                    }
+
+                    let tag = '';
+                    tag += ' <div class="keyword-item">';
+                    tag += '    <span class="keyword-txt">' + keywordTxt + '</span>';
+                    tag += '    <button type="button" class="btn-del" onclick="deleteKeyword(this)">';
+                    tag += '        <i class="ic-keyword-del"></i>';
+                    tag += '        <span class="for-a11y">삭제</span>';
+                    tag += ' </div>';
+
+                    $("#keywordText").append(tag);
+
+                    array.push(keywordTxt);
+                    keyword.value = "";
+                }
+                document.getElementById("hiddenKeyword").value = array;
+            });
+
+            function deleteKeyword(data) {
+                console.log(data);
+                const parent = $(data).parent();
+                const removeVal = parent.find('.keyword-txt').text();
+                $(parent).remove();
+                for(let i = 0; i < array.length; i++) {
+                    if(removeVal === array[i]) {
+                        array.splice(i,1);
+                        break;
+                    }
+                }
+                document.getElementById("hiddenKeyword").value = array;
+            }
+        </script>
+        <script>
+
+            $('#subject').selectmenu({
+                change: function(event, ui) {
+                    var selectedOption = $(this).find('option:selected');
+                    var classIdx = selectedOption.data('classidx');
+                    fetchLargeChapters(classIdx);
+                    $("#largeChapter").selectmenu("option", "disabled", false);
+                }
+            });
+
+            $('#largeChapter').selectmenu({
+                change: function(event, ui) {
+                    var selectedOption = $(this).find('option:selected');
+                    var largeIdx = selectedOption.data('largeidx');
+                    fetchMediumChapters(largeIdx);
+                    $("#mediumChapter").selectmenu("option", "disabled", false);
+                }
+            });
+
+            $('#mediumChapter').selectmenu({
+                change: function(event, ui) {
+                    var selectedOption = $(this).find('option:selected');
+                    var mediumIdx = selectedOption.data('mediumidx');
+                    fetchSmallChapters(mediumIdx);
+                    $("#chaxi").selectmenu("option", "disabled", false);
+                }
+            });
+
+            function validateSubject() {
+                const schoolLevel = $("input[name=school]:checked").val();
+                if (schoolLevel !== "E") {
+                    resetAllSelections(); // 초기화 추가
+                    $("input[name=grade]").prop("checked", false);
+                    $("input[name=semester]").prop("checked", false);
+                    $('.grade-term-row').hide();
+                    $('.semester-term-row').hide();
+                    $('#subject').empty().append('<option disabled selected>과목 선택</option>');
+                    $('#subject').selectmenu('option', 'disabled', false);
+                    if (schoolLevel === "M") {
+                        resetAllSelections();
+                        fetchMSubjects();
+                    } else if (schoolLevel === "H") {
+                        resetAllSelections();
+                        fetchHSubjects();
+                    }
+                } else {
+                    resetAllSelections(); // 초기화 추가
+                    $('.grade-term-row').show();
+                    $("input[name=grade][value='0']").prop("checked", true);
+                    $("input[name=semester][value='0']").prop("checked", true);
+                    $('.semester-term-row').hide();
+                    $('.subject-term-row').show();
+                    $('#subject').selectmenu('option', 'disabled', false);
+                    fetchSubjects(0, 0);
+                }
+            }
+
+            function commonCk() {
+                resetAllSelections(); // 초기화 추가
+                const grade = $("input[name=grade]:checked").val();
+                const semester = $("input[name=semester]:checked").val();
+
+                if (grade == "0") {
+                    $("input[name=semester][value='0']").prop("checked", true);
+                    $('.semester-term-row').hide();
+                    $('#subject').selectmenu('option', 'disabled', false);
+                    fetchSubjects(0, 0);
+                } else {
+                    $('.semester-term-row').show();
+                    $('#subject').selectmenu('option', 'disabled', false);
+                    fetchSubjects(grade, semester);
+                }
+            }
+
+            function fetchMSubjects() {
+                $.ajax({
+                    url: '/fetchMiddleSubjects',
+                    method: 'GET',
+                    success: function(data) {
+                        var subjectGroup = $('#subject');
+                        subjectGroup.empty().append('<option value="" disabled selected>과목 선택</option>');
+                        data.forEach(function(subject) {
+                            subjectGroup.append('<option value="' + subject.subject + '" data-classIdx="' + subject.classIdx + '">' + subject.subject + '</option>');
+                        });
+                        subjectGroup.selectmenu('refresh');
+                    },
+                    error: function(error) {
+                        alert('과목 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function fetchHSubjects() {
+                $.ajax({
+                    url: '/fetchHighSubjects',
+                    method: 'GET',
+                    success: function(data) {
+                        var subjectGroup = $('#subject');
+                        subjectGroup.empty().append('<option value="" disabled selected>과목 선택</option>');
+                        data.forEach(function(subject) {
+                            subjectGroup.append('<option value="' + subject.subject + '" data-classIdx="' + subject.classIdx + '">' + subject.subject + '</option>');
+                        });
+                        subjectGroup.selectmenu('refresh');
+                    },
+                    error: function(error) {
+                        alert('과목 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function fetchSubjects(grade, semester) {
+                $.ajax({
+                    url: '/fetchSubjects',
+                    method: 'GET',
+                    data: { grade: grade, semester: semester },
+                    success: function(data) {
+                        var subjectGroup = $('#subject');
+                        subjectGroup.empty().append('<option disabled selected>과목 선택</option>');
+                        data.forEach(function(subject) {
+                            subjectGroup.append('<option value="' + subject.subject + '" data-classIdx="' + subject.classIdx + '">' + subject.subject + '</option>');
+                        });
+                        subjectGroup.selectmenu('refresh');
+                        subjectGroup.prop('disabled', false);
+                    },
+                    error: function(error) {
+                        alert('과목 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function fetchLargeChapters(classIdx) {
+                $.ajax({
+                    url: '/fetchLargeChapters',
+                    method: 'GET',
+                    data: { classIdx: classIdx },
+                    success: function(data) {
+                        var largeChapterSelect = $('#largeChapter');
+                        largeChapterSelect.empty().append('<option disabled selected>대단원 선택</option>');
+                        if (data.length > 0) {
+                            $('.chapter-term-row').show(); // Show the chapter row
+                            data.forEach(function(chapter) {
+                                largeChapterSelect.append('<option value="' + chapter.largeChapter + '" data-largeIdx="' + chapter.largeIdx + '">' + chapter.largeChapter + '</option>');
+                            });
+                            largeChapterSelect.selectmenu('refresh');
+                            largeChapterSelect.prop('disabled', false);
+                        } else {
+                            $('.chapter-term-row').hide();
+                        }
+                    },
+                    error: function(error) {
+                        // alert('대단원 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function fetchMediumChapters(largeIdx) {
+                $.ajax({
+                    url: '/fetchMediumChapters',
+                    method: 'GET',
+                    data: { largeIdx: largeIdx },
+                    success: function(data) {
+                        var mediumChapterSelect = $('#mediumChapter');
+                        mediumChapterSelect.empty().append('<option value="" disabled selected>중단원 선택</option>');
+                        if (data.length > 0) {
+                            data.forEach(function(chapter) {
+                                mediumChapterSelect.append('<option value="' + chapter.mediumChapter + '" data-mediumIdx="' + chapter.mediumIdx + '">' + chapter.mediumChapter + '</option>');
+                            });
+                            mediumChapterSelect.selectmenu('refresh');
+                            mediumChapterSelect.prop('disabled', false);
+                            // Show the medium chapter row
+                            $('.mediumChapter-term-row').show();
+                        } else {
+                            $('.mediumChapter-term-row').hide();
+                        }
+                    },
+                    error: function(error) {
+                        // alert('중단원 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function fetchSmallChapters(mediumIdx) {
+                $.ajax({
+                    url: '/fetchSmallChapters',
+                    method: 'GET',
+                    data: { mediumIdx: mediumIdx },
+                    success: function(data) {
+                        var smallChapterSelect = $('#chaxi');
+                        smallChapterSelect.empty().append('<option value="" disabled selected>차시 선택</option>');
+                        if (data.length > 0) {
+                            data.forEach(function(chapter) {
+                                smallChapterSelect.append('<option value="' + chapter.smallChapter + '" data-smallIdx="' + chapter.smallIdx + '">' + chapter.smallChapter + '</option>');
+                            });
+                            smallChapterSelect.selectmenu('refresh');
+                            smallChapterSelect.prop('disabled', false);
+                            // Show the chaxi row
+                            $('.chaxi-term-row').show();
+                        } else {
+                            $('.chaxi-term-row').hide();
+                        }
+                    },
+                    error: function(error) {
+                        // alert('차시 데이터를 가져오는 데 실패했습니다.');
+                        console.log(error);
+                    }
+                });
+            }
+
+            function resetAllSelections() {
+                // 과목, 대단원, 중단원, 차시 초기화
+                $("#chaxi").val('').selectmenu('refresh');
+                $("#mediumChapter").val('').selectmenu('refresh');
+                $("#largeChapter").val('').selectmenu('refresh');
+                $("#subject").val('').selectmenu('refresh');
+
+                // 숨겨진 필드들 초기화
+                $('.chaxi-term-row').hide();
+                $('.mediumChapter-term-row').hide();
+                $('.chapter-term-row').hide();
+
+                // 필드를 비활성화
+                $("#chaxi").selectmenu("option", "disabled", true);
+                $("#mediumChapter").selectmenu("option", "disabled", true);
+                $("#largeChapter").selectmenu("option", "disabled", true);
+            }
+
+            window.onload = validateSubject();
+
+
+        </script>
+    </th:block>
+</div>
+</body>
+</html>

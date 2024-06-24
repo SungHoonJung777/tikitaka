@@ -1,0 +1,214 @@
+	<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+	<meta charset="utf-8">
+	<title>필통</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, minimum-scale=1">
+	<meta name="format-detection" content="telephone=no">
+	<meta name="keywords" content="T셀파, 필통"/>
+	<meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나  즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+	<script th:src="@{/js/jquery.js}"></script>
+	<script th:src="@{/js/jquery-ui.js}"></script>
+    <script th:src="@{/js/menu.js}"></script>
+
+    <script th:src="@{/js/fileUtil.js}"></script>
+    <script th:src="@{/js/axios.min.js}"></script>
+    <link rel="icon" href="/images/favicon/favicon.ico">
+	<link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+	<link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/create.css}">
+    <link rel="stylesheet" th:href="@{/css/create2.css}">
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" type="text/css">
+    <link rel="stylesheet" th:href="@{/css/style.css}" type="text/css">
+    <script src="https://kit.fontawesome.com/be97bd8e1b.js" crossorigin="anonymous"></script>
+    <th:block layout:fragment="headScript"></th:block>
+</head>
+<body>
+<div class="wrap">
+	<!-- S : header -->
+	<header class="header" style="z-index: 2; position: static" >
+
+
+        <div class="content-container gnb-wrap">
+            <h1 class="site-title"><a th:href="@{/}" class="link-home"></a></h1>
+            <div class="gnb-nav">
+                <div class="gnb-item"><a class="link-gnb" th:classappend="${pageName == 'quiz' ? 'active' : ''}" th:href="|@{/main2}|">퀴즈</a></div>
+                <div class="gnb-item">
+                    <a class="link-gnb" th:classappend="${pageName == 'storage' ? 'active' : ''}" th:href="@{/storage/list}">보관함</a>
+                    <div class="gnb-sub-nav">
+                        <a href="" class="link-sub-gnb" th:href="@{/storage/list}">좋아요 한 자료</a>
+                        <a href="" class="link-sub-gnb"  th:href="@{/storage/mydata}">나의 자료</a>
+                    </div>
+                </div>
+                <div class="gnb-item">
+                    <a class="link-gnb" th:classappend="${pageName == 'report' ? 'active' : ''}" th:href="@{/report/list}">리포트</a>
+                    <div class="gnb-sub-nav">
+                        <a href="" class="link-sub-gnb" th:href="@{/}">진행 중</a>
+                        <a href="" class="link-sub-gnb" th:href="@{/}">진행완료</a>
+                    </div>
+                </div>
+                <div class="gnb-item">
+                    <ul>
+                        <li th:if="${session.id}"><a th:href="@{/logout}"><i class="fa fa-user"></i> Logout</a></li>
+                        <li th:unless="${session.id}"><a th:href="@{/login}"><i class="fa fa-user"></i> Login</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="gnb-right">
+
+                <div class="has-layer">
+                    <button type="button" class="btn-round bg-orange">만들기</button>
+                    <div class="make-layer">
+                        <a href="/quiz/maker" class="link-make"><i class="icon-make n2"></i>퀴즈</a>
+                    </div>
+                </div>
+                <button  type="button" class="btn-round bg-blue open-dialog-go" id="registBtn">입장하기</button>
+            </div>
+        </div>
+	</header>
+	<!-- E : header -->
+
+    <main class="content-area"  layout:fragment="content">
+
+    </main>
+
+    <!-- S : footer -->
+    <footer class="footer">
+
+        <div class="copyright">
+            <div class="content-container">
+                <div class="copyright-item">
+                    <div class="logo-img"><img src="/images/common/footer-logo1.png" alt=""></div>
+                    <div class="company-info">
+                        <p class="company-info-txt">대표 : 오병목 / 주소 : 서울시 금천구 가산로 9길 54</p>
+                        <p class="company-info-txt">사업자 등록번호 : 119 - 81 - 19350 /부가통신사업신고번호 : 016712</p>
+                    </div>
+                </div>
+                <div class="copyright-item">
+                    <div class="logo-img"><img src="/images/common/footer-logo2.png" alt=""></div>
+                    <div class="company-info">
+                        <p class="company-info-txt">대표 : 박정과, 윤문현  / 주소 : 서울시 금천구 디지털로 10길 78 가산테라타워</p>
+                        <p class="company-info-txt">사업자 등록번호 : 119 - 81 - 70643</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn-top" style="z-index: 100"><span class="for-a11y">top</span></button>
+    </footer>
+    <!-- E : footer -->
+
+    <div title="입장하기" class="dialog-go-in dialog-basic">
+        <div class="go-in-content">
+            <div class="content-center">
+                <h2 class="title">입장하기</h2>
+                <i class="img-go-in"></i>
+                <p class="desc">공유 받은 입장코드를 입력해주세요.</p>
+                <div class="form-box">
+                    <form method="post" action="/enterquiz">
+                        <input name="roomIdx" type="text" class="input-code" placeholder="입장코드 입력">
+                        <button type="submit" class="btn-type-dark size-lg">확인</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // 페이지별로 설정된 menuId를 가져와서 sessionStorage에 저장
+            var menuId = $('body').data('menu-id');
+            if (menuId) {
+                sessionStorage.setItem('menuId', menuId);
+            }
+
+            // 나머지 공통 스크립트
+            $(".btn-family-site").click(function () {
+                $(this).toggleClass("active");
+            });
+            $(".has-layer .btn-round").click(function () {
+                $(this).toggleClass("active");
+            });
+            $(".gnb-item").mouseover(function () {
+                $(this).addClass("active");
+            });
+            $(".gnb-item").mouseleave(function () {
+                $(this).removeClass("active");
+            });
+
+            $( ".dialog-go-in" ).dialog({
+                autoOpen: false,
+                dialogClass: "go-in-type",
+                width: 1240,
+                modal: true,
+                resizable:true,
+            });
+
+            $( ".dialog-all-view" ).dialog({
+                autoOpen: false,
+                dialogClass: "basic-type",
+                width: 900,
+                modal: true,
+                resizable:true,
+                buttons: [
+                    {
+                        text: "초기화",
+                        click: function() {
+                            initSearchSubject();
+                        }
+                    },
+                    {
+                        text: "검색",
+                        click: function() {
+                            searchSubject();
+                        }
+                    }
+                ]
+            });
+
+            // Link to open the dialog
+         /*   $( ".open-dialog-go" ).click(function( event ) {
+                $( ".dialog-go-in" ).dialog( "open" );
+                event.preventDefault();
+            });*/
+
+            $( ".open-dialog-all" ).click(function( event ) {
+                $( ".dialog-all-view" ).dialog( "open" );
+                event.preventDefault();
+            });
+
+            // top btn
+            var topBtn = $('.btn-top');
+            $(window).scroll(function (){
+                var heightY = $(document).scrollTop();
+                if(heightY >= 50){
+                    topBtn.stop().addClass('show');
+                } else {
+                    topBtn.stop().removeClass('show');
+                }
+            });
+            topBtn.on('click', function (){
+                $(document).scrollTop(0);
+            });
+        });
+
+        document.querySelector("#registBtn").addEventListener("click", function () {
+
+
+            let popupUrl = "/regist";
+
+            // 팝업 창 옵션 설정
+            let popupOption = "width=1920,height=1080,scrollbars=yes,resizable=yes";
+
+            // 팝업 창 열기
+            window.open(popupUrl, "", popupOption);
+        });
+    </script>
+</div>
+<th:block layout:fragment="script">
+
+</th:block>
+
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, minimum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나  즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery-ui.js"></script>
+
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    <link rel="stylesheet" href="/css/base.css">
+</head>
+<body>
+<div class="wrap" layout:fragment="content">
+    <main class="content-area sub">
+        <div class="content-container">
+            <ul class="link-type-tabs">
+                <li class="link-tab-item" th:classappend="${endYn eq 's'} ? 'active' : ''"><a href="/report/list" class="link-tab">진행중</a></li>
+                <li class="link-tab-item" th:classappend="${endYn eq 'e'} ? 'active' : ''"><a href="/report/list?endYn=e" class="link-tab">진행완료</a></li>
+            </ul>
+            <div class="list-sh-box">
+                <input type="text" class="inp-a" placeholder="검색어 입력" id="search_word" th:value="${search_word}"/>
+                <input type="hidden" id = "endYn" th:value = "${endYn}"/>
+                <button type="button" class="btn-type-blue size-sm" th:onclick="search([[${endYn}]])">검색</button>
+                <button type="button" class="btn-type-white size-sm" onclick="resetbtn()">초기화</button>
+            </div>
+
+            <div class="list-heading">
+                <p class="total-count">총 <span class="value">[[${#lists.size(reportlist)}]]</span>개</p>
+                <div class="storage-btn-group">
+                    <button type="button" class="btn-type-white size-sm" id="excel_down"><i class="ic-excel"></i>엑셀 다운로드</button>
+                    <button type="button" class="btn-type-white size-sm" onclick="deletereport('all')">
+                        <i class="ic-del"></i>전체삭제</button>
+                    <button type="button" class="btn-type-white size-sm" onclick="deletereport('select')"><i class="ic-choice"></i>선택삭제</button>
+                </div>
+            </div>
+
+            <div class="list-table-b big2">
+                <table>
+                    <colgroup>
+                        <col style="width:70px" span="2">
+                        <col style="width:140px" span="3">
+                        <col style="width:auto">
+                        <col style="width:120px" span="2">
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col">
+							<span class="checkbox-a">
+								<input type="checkbox" class="checkbox-form" id="chk1-1">
+								<label class="checkbox-txt" for="chk1-1"><span class="for-a11y">선택</span></label>
+							</span>
+                        </th>
+                        <th scope="col">번호</th>
+                        <th scope="col">유형</th>
+                        <th scope="col">생성일</th>
+                        <th scope="col">마감일</th>
+                        <th scope="col">제목</th>
+                        <th scope="col">참여인원</th>
+                        <th scope="col">공유정보</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${reportlist.isEmpty()}">
+                        <td colspan="8">등록된 데이터가 없습니다</td>
+                    </tr>
+                    <tr th:each="list, status:${reportlist}">
+                        <td>
+							<span class="checkbox-a">
+								<input type="checkbox" class="checkbox-form" id="chk1-2" name="checkbx" th:value="${list.roomIdx}">
+								<label class="checkbox-txt" for="chk1-2"><span class="for-a11y">선택</span></label>
+							</span>
+                        </td>
+                        <td>[[${status.count}]]</td>
+                        <td>
+                            <span class="flag-item-fix orange">퀴즈</span>
+                        </td>
+                        <td th:if="${list.regDate!=null}">[[${#strings.substring(list.regDate, 0, 10)}]]</td>
+                        <td th:if="${list.regDate==null}">-</td>
+                        <td th:if="${list.endDate!=null}">[[${#strings.substring(list.endDate, 0, 10)}]]</td>
+                        <td th:if="${list.endDate==null}">-</td>
+                        <td class="align-center">
+                            <a th:href="@{/report/detail(roomIdx=${list.roomIdx})}" class="link-table">[[${list.title}]]</a>
+                        </td>
+                        <td>[[${list.enterCount}]]</td>
+                        <td>
+                            <button type="button" class="btn-type-white size-sm" id="open-dialog-url-share"><i class="ic-share2"></i>공유정보</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="btn-more-area">
+<!--                <button type="button" class="btn-type-white size-sm">더보기 ( <span class="current">1</span>/3 )<i class="ic-more"></i></button>-->
+            </div>
+        </div>
+    </main>
+    <!-- S : 공유정보 -->
+    <div title="공유정보" class="dialog-url-share">
+        <div class="make-title-box">
+            <div class="box-flex">
+                <div class="flag-list">
+                    <span class="flag-item gray">초등</span>
+                    <span class="flag-item blue">워크시트</span>
+                </div>
+                <p class="make-title">같이 학습지를 풀어봅시다. </p>
+            </div>
+        </div>
+        <div class="gray-box-b">
+            <div class="make-item">
+                <p class="title">URL</p>
+                <div class="make-form">
+                    <input type="text" class="inp-b" value="https://testtestetstetst....">
+                    <button type="button" class="btn-type-darkgray size-sm">복사</button>
+                </div>
+            </div>
+            <p class="txt-or">or</p>
+            <div class="make-item">
+                <p class="title">입장코드 </p>
+                <div class="make-form">
+                    <input type="text" class="inp-b" value="1A2B3C">
+                    <button type="button" class="btn-type-darkgray size-sm">복사</button>
+                </div>
+            </div>
+            <p class="dot-txt">URL 주소를 브라우저에 입력하거나 입장하기 페이지에서 입장 코드를 입력하시면 입장이 가능합니다.</p>
+        </div>
+    </div>
+    <!-- E : 공유정보 -->
+</div>
+
+<script layout:fragment="script">
+    $( ".dialog-url-share" ).dialog({
+        autoOpen: false,
+        dialogClass: "basic-type dialog-grid-b",
+        width: 700,
+        modal: true,
+        resizable:true
+    });
+    $( "#open-dialog-url-share" ).click(function( event ) {
+        $( ".dialog-url-share" ).dialog( "open" );
+        event.preventDefault();
+    });
+    $('#excel_down').click(function(event){
+        let endYn = document.getElementById("endYn").value;
+        let search_word = document.getElementById("search_word").value;
+        window.location.href = "/report/listdown?endYn="+endYn+"&search_word="+search_word;
+    })
+    function search(endYn){
+        let search_word = document.getElementById("search_word").value;
+        window.location.href="/report/list?search_word="+search_word+"&endYn="+endYn;
+    }
+    function resetbtn(){
+        document.getElementById("search_word").value = "";
+        let search_word = document.getElementById("search_word").value;
+        let endYn = document.getElementById("endYn").value;
+        window.location.href="/report/list?search_word="+search_word+"&endYn="+endYn;
+    }
+    function deletereport(delete_flag){
+        let checkbox = document.getElementsByName("checkbx")
+        let checked = [];
+        if(delete_flag == 'all'){
+            for (let i = 0; i < checkbox.length; i++) {
+                checked.push("'"+checkbox[i].value+"'");
+            }
+        }else {
+            for (let i = 0; i < checkbox.length; i++) {
+                if (checkbox[i].checked) {
+                    checked.push("'"+checkbox[i].value+"'");
+                }
+            }
+        }
+        console.log(checked);
+        window.location.href="/report/deletereport?roomIdx="+checked;
+    }
+</script>
+</body>
+</html>

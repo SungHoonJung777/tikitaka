@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/swiper-bundle.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <!-- <script src="http://code.jquery.com/jquery-latest.min.js"></script>-->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+</head>
+<body>
+
+<input id="roomNumber" type="hidden" th:value="${roomNumber}" readonly/>
+<input id="nickname" type="hidden" th:value="${nickname}" readonly>
+<input id="character" type="hidden" th:value="${character}" readonly>
+
+<div class="wrap result">
+    <header class="header">
+        <div class="header-title">
+            <div class="title-group">같이하기</div>
+        </div>
+        <div class="header-util">
+            <div class="header-info">
+                <span class="info-name">
+                     <i class="user-img color1"><img th:src="@{'../../images/character/' + ${character} + '.png'}" alt=""></i>
+                    <p th:text="${nickname}"></p>
+                </span>
+            </div>
+        </div>
+    </header>
+    <main class="content-area">
+        <div class="result-box">
+            <p class="result-txt-a">나의 점수는?</p>
+            <p class="result-txt-b" th:text="${total}+'점'">90점</p>
+            <div class="radio-group">
+                <!--<span class="radio-b">
+                    <input type="radio" class="radio-form" id="radio1-1" name="radio1">
+                    <label class="radio-txt" for="radio1-1">1번부터 보기</label>
+                </span>
+                <span class="radio-b">
+                    <input type="radio" class="radio-form" id="radio1-2" name="radio1">
+                    <label class="radio-txt" for="radio1-2">마지막 번호부터 보기</label>
+                </span>-->
+            </div>
+            <div class="result-table">
+                <table>
+                    <colgroup>
+                        <col class="w-01">
+                        <col class="w-auto">
+                    </colgroup>
+                    <tbody th:each="list , iterStat: ${report}">
+                    <tr>
+                        <th scope="row" th:text="'문제' + ${iterStat.count} +'번'">문제 1번</th>
+                        <td th:text="${list.studentQuestion}">광복절은 1945년이다. </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">정답여부</th>
+                        <td class="answer" th:text="${list.studentAnswerYN}">O</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="btn-a-center">
+                <button type="button" class="btn-type-black" id="closeBtn">퀴즈종료</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- S : 해설 -->
+<div title="해설" class="dialog-explain">
+    <p class="explain-text">광복절은 1945년<br> 8월 15일입니다.</p>
+</div>
+<!-- E : 해설 -->
+
+<script>
+    document.querySelector("#closeBtn").addEventListener('click', ()=> {
+       window.close();
+    });
+    $( ".open-dialog-explain" ).click(function( event ) {
+        $( ".dialog-explain" ).dialog( "open" );
+        event.preventDefault();
+    });
+
+    $( ".dialog-explain" ).dialog({
+        autoOpen: false,
+        dialogClass: "responsive-type dialog-grid-b dark-type",
+        width: 290,
+        resizable:true
+    });
+</script>
+</body>
+</html>

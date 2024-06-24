@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나 즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+    <script th:src="@{/js/swiper-bundle.min.js}"></script>
+
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/swiper-bundle.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <!-- STOMP -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+<body>
+<div class="go-in-wrap">
+    <main class="content-center">
+        <h2 class="title">입장하기</h2>
+        <i class="img-go-in"></i>
+        <p class="desc">공유 받은 입장코드를 입력해주세요.</p>
+        <div class="form-box">
+            <form method="post" action="/enterquiz">
+                <input name="roomIdx" type="text" class="input-code" placeholder="입장코드 입력">
+                <button type="submit" class="btn-type-dark size-lg">확인</button>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+
+
+</script>
+</body>
+</html>

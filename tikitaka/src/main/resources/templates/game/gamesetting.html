@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Title</title>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery-ui.js"></script>
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <script src="/js/stomp.umd.min.js"></script>
+    <script src="/js/websocketTGamesStomp.js"></script>
+</head>
+<body>
+<div tabindex="-1" role="dialog" class="ui-dialog ui-corner-all ui-widget ui-widget-content ui-front basic-type dialog-grid-a ui-dialog-buttons ui-draggable ui-resizable" aria-describedby="ui-id-6" aria-labelledby="ui-id-7" style="position: absolute; height: auto; width: auto; z-index: 101;">
+    <div class="ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle">
+        <span id="ui-id-7" class="ui-dialog-title">게임하기</span>
+        <button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close" title="Close">
+            <span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"> </span>Close
+        </button>
+    </div>
+    <div class="dialog-game ui-dialog-content ui-widget-content" id="ui-id-6" style="width: auto; min-height: 0px; max-height: none; height: auto;">
+
+    <form method="post" id="gameform" name="gameform" action="/game/create">
+        <!--  세션으로 변경 ex)quizIdx로 변경 -->
+        <input type="hidden" name="quizIdx" id="quizIdx" th:value="${quizRoomDTO.quizIdx}">
+        <!--  세션으로 변경 ex)session.memberIdx, session.memberName -->
+        <input type="hidden" name="teacherIdx" id="teacherIdx" th:value="${quizRoomDTO.teacherIdx}">
+        <input type="hidden" name="teacherName" id="teacherName" th:value="${quizRoomDTO.teacherName}">
+
+        <div class="make-box">
+            <div class="box-flex">
+                <div class="flag-list">
+                    <span class="flag-item gray">초등</span>
+                    <span class="flag-item orange">퀴즈</span>
+                </div>
+                <input type="text" class="inp-a" name="title" placeholder="제목을 입력하세요" value="">
+            </div>
+        </div>
+
+        <div class="form-table">
+            <table>
+                <colgroup>
+                    <col style="width:auto">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row">함께 게임형</th>
+                    <td>
+                        <span class="desc">학생들이 동시입장하여 실시간으로 퀴즈를 풀 수 있어요. 선생님 화면으로 실시간 순위를 확인할 수 있어요.</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">안내문구</th>
+                    <td>
+                        <textarea class="textarea-a" name="intro" placeholder="공유할 학생들에게 전달할 안내문구를 작성해보세요"></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">옵션</th>
+                    <td>
+                        <div class="form-group">
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form" id="commentYN" name="commentYN" value="Y" checked="checked">
+                                <label class="checkbox-txt" for="commentYN">해설노출</label>
+                            </span>
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form" id="scoreYN" name="scoreYN" value="Y" checked="checked">
+                                <label class="checkbox-txt" for="scoreYN">점수표시</label>
+                            </span>
+                            <span class="checkbox-a">
+                            <input type="checkbox" class="checkbox-form" id="continueYN" name="continueYN" value="Y" checked="checked" readonly>
+                            <label class="checkbox-txt" for="continueYN">재입장</label>
+                            </span>
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form chk-disabled" id="rankYN" name="rankYN" value="Y" checked="checked" readonly>
+                                <label class="checkbox-txt" for="rankYN">순위표시</label>
+                            </span>
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form" id="bMusicYN" name="bMusicYN" value="Y" checked="checked">
+                                <label class="checkbox-txt" for="bMusicYN">배경음</label>
+                            </span>
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form" id="eMusicYN" name="eMusicYN" value="Y" checked="checked">
+                                <label class="checkbox-txt" for="eMusicYN">효과음</label>
+                            </span>
+                            <input type="hidden"  id="type" name="type" value="game">
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix">
+            <div class="ui-dialog-buttonset">
+                <button type="submit" class="ui-button ui-corner-all ui-widget">URL 생성 </button>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

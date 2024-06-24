@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, minimum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나  즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+    <script src="/js/stomp.umd.min.js"></script>
+    <script src="/js/websocketTGamesStomp.js"></script>
+
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <script>
+        $( function() {
+            $( ".sub-tabs" ).tabs();
+        } );
+    </script>
+</head>
+<body>
+<div class="wrap" layout:fragment="content">
+    <input type="hidden" th:value="${name}" id="name">
+    <main class="content-area sub">
+        <div class="content-container">
+            <ul class="link-type-tabs">
+                <li class="link-tab-item active"><a href="" class="link-tab">좋아요 한 자료</a></li>
+                <li class="link-tab-item"><a href="/storage/mydata" class="link-tab">나의 자료</a></li>
+            </ul>
+            <div class="sub-tabs sub-a">
+<!--                <ul>-->
+<!--                    <li><a href="#storage-sub-tabs1">저장완료</a></li>-->
+<!--                    <li><a href="#storage-sub-tabs2">임시저장</a></li>-->
+<!--                </ul>-->
+                <div id="storage-sub-tabs1">
+                    <form>
+                    <div class="list-sh-box">
+                        <input type="text" class="inp-a" placeholder="검색어 입력" name="search_word" id="search-word"  th:value="${pageRequestDTO.search_word}">
+                        <button type="submit" class="btn-type-blue size-sm">검색</button>
+                        <button type="button" class="btn-type-white size-sm" id="search-cancel" onclick="window.location.href='/storage/list'">초기화</button>
+                    </div>
+
+                    <div class="list-heading">
+                        <p class="total-count">총 &nbsp;<span class="value">[[${pageRequestDTO.total_count}]]</span>개</p>
+                        <button type="submit" class="btn-list-sorting" name="order" value="regDate" th:classappend="${order == 'regDate'} ? 'active' : ''">생성일순</button>
+                        <button type="submit" class="btn-list-sorting" name="order" value="title" th:classappend="${order == 'title'} ? 'active' : ''">가나다순</button>
+                        <div class="storage-btn-group">
+
+<!--                            <button type="button" class="btn-type-white size-sm"><i class="ic-copy2"></i>복사</button>-->
+
+                        </div>
+                    </div>
+                    </form>
+                    <script>
+                        var isChecked = false;
+                        function checkAll() {
+                            var checkboxes = document.querySelectorAll('.checkbox-form');
+                            checkboxes.forEach(function(checkbox) {
+                                checkbox.checked = !isChecked; // 체크 상태를 토글합니다.
+                            });
+
+                            // 체크 상태를 업데이트합니다.
+                            isChecked = !isChecked;
+                        }
+                    </script>
+
+                    <!-- S : storage list -->
+                    <div class="storage-list">
+                        <!-- S : item -->
+                        <div class="storage-list-item" th:if="${#lists.isEmpty(pageResponseDTO.dtoList)}">결과가 없습니다.</div>
+                        <form id="deleteFrm" method="post" action="/storage/delete">
+                        <div class="storage-list-item" th:each="dto, iterStat:${pageResponseDTO.dtoList}">
+                            <span class="checkbox-a">
+
+                                <label class="checkbox-txt" for="chk1-1">[[${pageRequestDTO.total_count -(pageRequestDTO.page-1)*pageRequestDTO.page_size -iterStat.index}]]</label>
+                            </span>
+                            <div class="storage-content">
+                                <div class="storage-img">
+                                    <img th:src="${dto.thumbnail}" alt="이미지" onerror="this.src='/images/icon/ic-logo.png'">
+                                </div>
+                                <div class="storage-info">
+                                    <div class="flag-list">
+                                        <span class="flag-item purple" th:if="${dto.school == 'E'}">초등</span>
+                                        <span class="flag-item green" th:if="${dto.school == 'M'}">중등</span>
+                                        <span class="flag-item orange" th:if="${dto.school == 'H'}">고등</span>
+                                        <span class="flag-item blue">퀴즈</span>
+                                    </div>
+                                    <a th:href="|@{/storage/detail}?quizIdx=${dto.quizIdx}|" class="link-storage">[[${dto.title}]]</a>
+                                    <div class="storage-data-box">
+                                        <div class="state-box">
+                                            <p class="state-item">좋아요: <span class="value-end">[[${dto.likeCnt}]]</span></p>
+                                        </div>
+                                        <div class="state-box">
+                                            <p class="state-item">진행 중인 과제: <span class="value-ing" th:text="${dto.gameIng}"></span>개</p>
+                                            <p class="state-item">진행 완료 과제: <span class="value-end" th:text="${dto.gameEnd}"></span>개</p>
+                                        </div>
+                                        <div class="date-share">
+                                            <p class="storage-date">등록일: [[${dto.regDate}]]</p>
+                                            <p class="storage-share" th:if="${dto.share == 'Y'}"><i class="ic-share"></i>공유</p>
+                                            <p class="storage-share" th:if="${dto.share != 'Y'}"><i class="ic-share-no"></i>공유안함</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="storage-btn-group">
+                                <button type="button" th:onclick="|openSetting(${dto.quizIdx})|" class="btn-a bg-red open-dialog-homework"><i class="ic-class"></i>게임하기</button>
+                                <button type="button" class="btn-a bg-red open-dialog-together" id="togetherButton" th:onclick="|togetherSetting(${dto.quizIdx})|"><i class="ic-together"></i>같이하기</button>
+
+                            </div>
+                        </div>
+                        </form>
+                    </div>
+                    <!-- E : storage list -->
+
+                    <div class="btn-more-area">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!--   S: 페이징?-->
+    <div class="float-end d-flex justify-content-center mb-5">
+        <ul class="pagination col flex-wrap" style="background-color: #ffffff;">
+            <!-- Previous Page Link -->
+            <li class="page-item" th:if="${pageRequestDTO.prev_page_flag}">
+                <a class="page-link arrow__color" th:href="|@{/storage/list}?page=${pageRequestDTO.page_block_start-10}&${pageRequestDTO.linkParams}|">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+            </li>
+            <li class="page-item" th:unless="${pageRequestDTO.prev_page_flag}">
+                <a class="page-link arrow__color" disabled>
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+            </li>
+
+            <!-- Page Numbers -->
+            <th:block th:each="i : ${#numbers.sequence(pageRequestDTO.page_block_start, pageRequestDTO.page_block_end)}">
+                <li class="page-item" th:classappend="${pageRequestDTO.page == i} ? 'active' : ''">
+                    <a class="page-link theme__color" th:href="|@{/storage/list}?page=${i}&${pageRequestDTO.linkParams}|">[[${i}]]</a>
+                </li>
+            </th:block>
+
+            <!-- Next Page Link -->
+            <li class="page-item" th:if="${pageRequestDTO.next_page_flag}">
+                <a class="page-link arrow__color" th:href="|@{/storage/list}?page=${pageRequestDTO.page_block_end+1}&${pageRequestDTO.linkParams}|">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </li>
+            <li class="page-item" th:unless="${pageRequestDTO.next_page_flag}">
+                <a class="page-link arrow__color" disabled>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!--   E: 페이징?-->
+
+
+    <!-- S : 과제생성 -->
+    <!-- S : 과제생성 -->
+
+    <!-- S : 같이하기 -->
+   <!-- <div title="같이하기" class="dialog-together">
+        <div class="make-box">
+            <div class="box-flex">
+                <div class="flag-list">
+                    <span class="flag-item gray">초등</span>
+                    <span class="flag-item orange">퀴즈</span>
+                </div>
+                <input type="text" class="inp-a">
+            </div>
+        </div>
+        <div class="form-table">
+            <table>
+                <colgroup>
+                    <col style="width:100px">
+                    <col style="width:auto">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row">안내문구</th>
+                    <td>
+                        <textarea class="textarea-a" placeholder="공유할 학생들에게 전달할 안내문구를 작성해보세요."></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">옵션</th>
+                    <td>
+                        <div class="form-group">
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form" id="chk2-11">
+                                <label class="checkbox-txt" for="chk2-11">재입장 가능</label>
+                            </span>
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form" id="chk2-22">
+                                <label class="checkbox-txt" for="chk2-22">점수표시</label>
+                            </span>
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form" id="chk2-3">
+                                <label class="checkbox-txt" for="chk2-3">해설노출</label>
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>-->
+    <!-- S : 같이하기 -->
+
+    <!--&lt;!&ndash; S : 과제 URL 생성 &ndash;&gt;
+    <div title="과제 URL 생성" class="dialog-url1">
+        <div class="make-title-box">
+            <div class="box-flex">
+                <div class="flag-list">
+                    <span class="flag-item blue">초등</span>
+                    <span class="flag-item orange">퀴즈</span>
+                </div>
+                <p class="make-title">같이 학습지를 풀어봅시다. </p>
+            </div>
+        </div>
+        <div class="gray-box-b">
+            <div class="make-item">
+                <p class="title">URL</p>
+                <div class="make-form">
+                    <input type="text" class="inp-b">
+                    <button type="button" class="btn-type-darkgray size-sm">복사</button>
+                </div>
+            </div>
+            <p class="txt-or">or</p>
+            <div class="make-item">
+                <p class="title">입장코드 </p>
+                <div class="make-form">
+                    <input type="text" class="inp-b">
+                    <button type="button" class="btn-type-darkgray size-sm">복사</button>
+                </div>
+            </div>
+            <p class="dot-txt">URL 주소를 브라우저에 입력하거나 입장하기 페이지에서 입장 코드를 입력하시면 입장이 가능합니다.</p>
+        </div>
+
+        <div class="form-table">
+            <table>
+                <colgroup>
+                    <col style="width:132px">
+                    <col style="width:auto">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row">과제정보</th>
+                    <td>
+                        <div class="homework-item">
+                            <p class="homework-title">마감일</p>
+                            <p class="homework-content">
+                                <span class="day">2022.03.18</span>
+                                <span class="time">PM 12:00</span>
+                            </p>
+                        </div>
+                        <div class="homework-item">
+                            <p class="homework-title">문구</p>
+                            <p class="homework-content">
+                                반 번호와 이름은 꼭 입력하세요. <br>1학년 1반 친구들 파이팅~!
+                            </p>
+                        </div>
+                        <div class="homework-item">
+                            <p class="homework-title">옵션</p>
+                            <p class="homework-content">
+                                재입장 가능 / 점수표시 / 해설노출
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>-->
+    <!-- S : 과제 URL 생성 -->
+
+    <!-- S : 같이하기 URL 생성 -->
+    <!--<div title="같이하기 URL 생성" class="dialog-url2">
+        <div class="make-title-box">
+            <div class="box-flex">
+                <div class="flag-list">
+                    <span class="flag-item blue">초등</span>
+                    <span class="flag-item orange">퀴즈</span>
+                </div>
+                <p class="make-title">같이 학습지를 풀어봅시다. </p>
+            </div>
+        </div>
+        <div class="gray-box-b">
+            <div class="make-item">
+                <p class="title">URL</p>
+                <div class="make-form">
+                    <input type="text" class="inp-b">
+                    <button type="button" class="btn-type-darkgray size-sm">복사</button>
+                </div>
+            </div>
+            <p class="txt-or">or</p>
+            <div class="make-item">
+                <p class="title">입장코드 </p>
+                <div class="make-form">
+                    <input type="text" class="inp-b">
+                    <button type="button" class="btn-type-darkgray size-sm">복사</button>
+                </div>
+            </div>
+            <p class="dot-txt">URL 주소를 브라우저에 입력하거나 입장하기 페이지에서 입장 코드를 입력하시면 입장이 가능합니다.</p>
+        </div>
+        <div class="line-box-a">
+            &lt;!&ndash; S : person list &ndash;&gt;
+            <div class="person-list">
+                &lt;!&ndash; S : person item &ndash;&gt;
+                <div class="person-item">
+                    <div class="person-img">
+                        <img src="https://placeimg.com/400/300/person" alt="">
+                        <p class="name">1.홍길동</p>
+                    </div>
+                    <button type="button" class="btn-del" onclick="OutAsk"><i class="ic-del2"></i><span class="for-a11y">삭제</span></button>
+                    <script>
+                        function OutAsk(id) {
+                            console.log(id);
+                            if (id != null) {
+                                let yn = confirm("댓글을 삭제 하시겠습니까?");
+                                if (yn) {
+                                    DeleteOK(id);
+                                }
+                            } else {
+                                alert("에러 발생");
+                            }
+                        }
+                    </script>
+
+                </div>
+                &lt;!&ndash; E : person item &ndash;&gt;
+                <div class="person-item">
+                    <div class="person-img">
+                        <p class="name">1.홍길동</p>
+                    </div>
+                    <button type="button" class="btn-del"><i class="ic-del2"></i><span class="for-a11y">삭제</span></button>
+                </div>
+                <div class="person-item">
+                    <div class="person-img">
+                        <img src="https://placeimg.com/400/300/person" alt="">
+                        <p class="name">1.홍길동</p>
+                    </div>
+                    <button type="button" class="btn-del"><i class="ic-del2"></i><span class="for-a11y">삭제</span></button>
+                </div>
+            </div>
+            &lt;!&ndash; E : person list &ndash;&gt;
+            <p class="person-in-info"><span>….</span>학생이 입장 중입니다<span>….</span></p>
+        </div>
+    </div>-->
+    <!-- S : 같이하기 URL 생성 -->
+
+
+    <script>
+        $(".select-a select").selectmenu();
+        $( ".datepicker" ).datepicker({
+            dateFormat: "yy.mm.dd",
+            monthNames: [ "1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월" ],
+            dayNamesMin: [ "일", "월", "화", "수", "목", "금", "토" ],
+            minDate: 0
+        });
+
+        $( ".dialog-homework" ).dialog({
+            autoOpen: false,
+            dialogClass: "basic-type dialog-grid-a",
+            width: 700,
+            modal: true,
+            resizable:true,
+            buttons: [
+                {
+                    text: "URL 생성 ",
+                    click: function() {
+                        var title = $("input[name='title']").val();
+                        var intro = $("textarea[name='intro']").val();
+
+                        if( title && intro ) {
+                            $( this ).dialog( "close" );
+                            $( ".dialog-url1" ).dialog("open");
+                        } else {
+                            alert("제목과 내용을 채워주세요.");
+                        }
+                    }
+                }
+            ]
+        });
+
+        $( ".dialog-together" ).dialog({
+            autoOpen: false,
+            dialogClass: "basic-type dialog-grid-a",
+            width: 700,
+            modal: true,
+            resizable:true,
+            buttons: [
+                {
+                    text: "URL 생성 ",
+                    click: function() {
+                        $( this ).dialog( "close" );
+                        $( ".dialog-url2" ).dialog("open");
+                    }
+                }
+            ]
+        });
+
+        $( ".dialog-url1" ).dialog({
+            autoOpen: false,
+            dialogClass: "basic-type dialog-grid-a",
+            width: 700,
+            modal: true,
+            resizable:true,
+            buttons: [
+                {
+                    text: "리포트로 이동 ",
+                    click: function() {
+                        $( this ).dialog( "close" );
+                    }
+                },
+                {
+                    text: "확인 ",
+                    click: function() {
+                        $( this ).dialog( "close" );
+                    }
+                }
+            ]
+        });
+
+        $( ".dialog-url2" ).dialog({
+            autoOpen: false,
+            dialogClass: "basic-type dialog-grid-a",
+            width: 700,
+            modal: true,
+            resizable:true,
+            buttons: [
+                {
+                    text: "시작하기 ",
+                    click: function() {
+                        $( this ).dialog( "close" );
+                    }
+                }
+            ]
+        });
+
+        $( ".open-dialog-homework" ).click(function( event ) {
+            $( ".dialog-homework" ).dialog( "open" );
+            event.preventDefault();
+        });
+
+        $( ".open-dialog-together" ).click(function( event ) {
+            $( ".dialog-together" ).dialog( "open" );
+            event.preventDefault();
+        });
+
+        $( ".open-dialog-url1" ).click(function( event ) {
+            $( ".dialog-url1" ).dialog( "open" );
+            event.preventDefault();
+        });
+
+        $( ".open-dialog-url2" ).click(function( event ) {
+            $( ".dialog-url2" ).dialog( "open" );
+            event.preventDefault();
+        });
+
+        function togetherSetting(num){
+            const name = document.querySelector("#name").value;
+            console.log(num + ":::" + name);
+            let popupUrl = "/togetherSetting?name="+name+"&num="+num;
+
+            // 팝업 창 옵션 설정
+            let popupOption = "width=520,height=400,scrollbars=yes,resizable=yes";
+
+            // 팝업 창 열기
+            window.open(popupUrl, "", popupOption);
+        }
+    </script>
+    
+
+</div>
+</body>
+</html>

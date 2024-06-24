@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout.html}">
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, minimum-scale=1">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나  즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+    <script src="/js/stomp.umd.min.js"></script>
+    <script src="/js/websocketTGamesStomp.js"></script>
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+</head>
+<body>
+<div class="wrap" layout:fragment="content">
+    <input type="hidden" th:value="${name}" id="name">
+    <main class="content-area sub">
+        <div class="content-container">
+<!--            <ul class="link-type-tabs">-->
+<!--                <li class="link-tab-item"><a href="/storage/list" class="link-tab">좋아요 한 자료</a></li>-->
+<!--                <li class="link-tab-item"><a href="/storage/mydata" class="link-tab">나의 자료</a></li>-->
+<!--            </ul>-->
+            <div class="storage-detail">
+                <div class="storage-detail-head">
+                    <div class="storage-content">
+                        <div class="storage-info">
+                            <div class="flag-list">
+                                <span class="flag-item purple" th:if="${quizDTO.school == 'E'}">초등</span>
+                                <span class="flag-item green" th:if="${quizDTO.school == 'M'}">중등</span>
+                                <span class="flag-item orange" th:if="${quizDTO.school == 'H'}">고등</span>
+                                <span class="flag-item blue">퀴즈</span>
+                            </div>
+                            <h2 class="title">[[${quizDTO.title}]]</h2>
+                        </div>
+                    </div>
+                    <div class="storage-btn-group">
+                        <button type="button" th:onclick="|openSetting(${quizDTO.quizIdx})|" class="btn-a bg-red open-dialog-homework"><i class="ic-class"></i>게임하기</button>
+                        <button type="button" class="btn-a bg-red open-dialog-together" id="togetherButton" th:onclick="|togetherSetting(${quizDTO.quizIdx})|"><i class="ic-together"></i>같이하기</button>
+
+                    </div>
+                </div>
+                <div class="detail-summary">
+                    <div class="storage-img">
+                        <img id="thumbnail" th:src="${quizDTO.thumbnail}" onerror="this.src='/images/icon/ic-logo.png'" alt="이미지">
+                        <div class="link-box" th:onclick="|insertLike(${quizDTO.quizIdx})|">
+                            <i th:id="'zzim' + ${quizDTO.quizIdx}"
+                               th:classappend="${likeList != null and #lists.contains(likeList, quizDTO.quizIdx)} ? ' ic-like' : ' ic-like-off'"></i>
+                            <span id="likeCntText">[[${quizDTO.likeCnt}]]</span>
+                        </div>
+                    </div>
+                    <div class="storage-info">
+                        <dl class="storage-info-item">
+                            <dt class="storage-info-title"><i class="ic-date"></i>생성일</dt>
+                            <dd class="storage-info-content date-share">
+                                <p class="storage-date">[[${quizDTO.regDate}]]</p>
+                                &nbsp;
+                                <p class="storage-share" th:if="${quizDTO.share == 'Y'}"><i class="ic-share"></i>공유</p>
+                                <p class="storage-share" th:if="${quizDTO.share == 'N'}"><i class="ic-share-no"></i>공유안함</p>
+                            </dd>
+                        </dl>
+                        <dl class="storage-info-item">
+                            <dt class="storage-info-title"><i class="ic-info"></i>과제현황</dt>
+                            <dd class="storage-info-content">진행 중인 게임: <span class="value-ing" th:text="${quizDTO.gameIng}"></span>개 / 진행 완료 과제: <span class="value-end" th:text="${quizDTO.gameEnd}"></span>개 </dd>
+                        </dl>
+                        <dl class="storage-info-item">
+                            <dt class="storage-info-title"><i class="ic-info"></i>단원정보</dt>
+                            <dd class="storage-info-content" th:text="${quizDTO.chaxi != null ? quizDTO.chaxi : '-'}"></dd>
+                        </dl>
+                        <dl class="storage-info-item">
+                            <dt class="storage-info-title"><i class="ic-desc"></i>설명</dt>
+                            <dd class="storage-info-content" th:text="${quizDTO.comment ne null && quizDTO.comment ne '' ? quizDTO.comment : '-'}"></dd>
+                        </dl>
+                        <dl class="storage-info-item">
+                            <dt class="storage-info-title"><i class="ic-keyword"></i>키워드</dt>
+                            <dd class="storage-info-content">
+                                <div class="keyword-group-box" id="keyword-group" th:if="${quizDTO.keyword ne null && quizDTO.keyword ne ''}">
+                                    <input type="hidden" th:value="${quizDTO.keyword}" id="keywordsValue">
+                                </div>
+                                <span th:if="${quizDTO.keyword eq null || quizDTO.keyword eq ''}">-</span>
+                            </dd>
+                        </dl>
+
+                        <dl class="storage-info-item">
+                            <dt class="storage-info-title"><i class="ic-file"></i>첨부파일</dt>
+                            <dd class="storage-info-content">
+                                <div th:if="${quizDTO.orgfile ne null && quizDTO.orgfile ne ''}">
+                                    <form action="/download">
+                                        <button style="color: blue" name="fileName" th:value="${quizDTO.savefile}">[[${quizDTO.orgfile}]]</button>
+                                    </form>
+                                </div>
+                                <span th:if="${quizDTO.orgfile eq null || quizDTO.orgfile eq ''}">-</span>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="storage-btn-group">
+                        <button type="button" class="btn-type-white size-sm" th:onclick="|location.href='/report/detail?roomIdx=${quizDTO.quizIdx}'|"><i class="ic-list"></i>리포트로 이동</button>
+<!--                        <button type="button" class="btn-type-white size-sm"><i class="ic-modify"></i>수정</button>-->
+<!--                        <button type="button" class="btn-type-white size-sm"><i class="ic-choice"></i>선택삭제</button>-->
+                    </div>
+                </div>
+
+                <div class="storage-detail-content">
+                    <div class="detail-head">
+                        <h3 class="title">상세보기</h3>
+                        <div class="right-col">
+                            총 <span class="total-value">[[${dtoList.size}]]</span>개
+                            <span class="checkbox-a">
+                                <input type="checkbox" class="checkbox-form" id="toggleCheck" checked >
+                                <label class="checkbox-txt" for="toggleCheck">정답표시</label>
+                            </span>
+                        </div>
+                    </div>
+
+                    <script>
+                        $(document).ready(function() {
+                            $('#toggleCheck').change(function() {
+                                if ($(this).is(':checked')) {
+                                    $('input[type="radio"]').each(function() {
+                                        $(this).prop('checked', $(this).data('checked')).prop('disabled', $(this).data('disabled'));
+                                    });
+                                } else {
+                                    $('input[type="radio"]').each(function() {
+                                        $(this).data('checked', $(this).is(':checked'));
+                                        $(this).data('disabled', $(this).is(':disabled'));
+                                        $(this).prop('checked', false);
+                                        $(this).prop('disabled', false);
+                                    });
+                                }
+                            });
+                        });
+                    </script>
+
+                    <div class="detail-content">
+                        <div class="detail-content-in" style="width: 100%">
+
+                            <div class="box-detail-item" th:each="dto, iterStat:${dtoList}">
+                                <div class="quiz-fraction"><strong class="current">[[${iterStat.index+1}]]</strong> / [[${dtoList.size}]]</div>
+                                <div class="quiz-timer" th:if="${dto.timer ne null && dto.timer ne 0}" >
+                                    <i class="ic-clock2"></i>
+                                    [[${dto.timer}]]초
+                                </div>
+                                <p class="q-title">[[${dto.question}]]</p>
+                                <div class="mt-30"></div>
+                                <div class="img-box" th:if="${dto.media != null}">
+                                    <img id="preview" th:src="${dto.media}" onerror="this.src='/images/icon/ic-logo.png'" alt="">
+                                </div>
+                                <div class="img-box"  th:if="${dto.youtubeUrl != null}">
+                                    <iframe th:src="'https://www.youtube.com/embed/' + ${dto.youtubeUrl}" ></iframe>
+                                </div>
+
+                            <!--s: 객관식 문제-->
+                                <div class="choice-group" th:if="${dto.category eq 'mul'}" id="choice-group">
+                                    <input type="hidden" th:value="${dto.mulTitle}" id="mul_question">
+                                    <input type="hidden" th:value="${dto.answer}" id="mul_answer">
+                                </div>
+
+                            <!--e: 객관식 문제-->
+
+
+                            <!--s: OX 문제-->
+                                <div class="ox-area" th:if="${dto.category eq 'ox'}">
+                                    <span class="ox-radio effectBtn correct">
+                                        <input type="hidden" value="true">
+                                        <input type="radio" class="radio-form" th:id="'chk-o-' + ${iterStat.index + 1}" name="answer-" value="O" th:attr="checked=${dto.answer eq 'o'}, disabled=${dto.answer eq 'x'}">
+                                        <label th:for="'chk-o-' + ${iterStat.index + 1}" class="radio-label-o">
+                                            <i class="ic-o"></i>
+                                            <span class="for-a11y">O</span>
+                                            <span class="desc">[[${dto.ocomment}]]</span>
+                                        </label>
+                                    </span>
+                                        <span class="ox-radio effectBtn">
+                                        <input type="hidden" value="false">
+                                        <input type="radio" class="radio-form" th:id="'chk-x-' + ${iterStat.index + 1}" name="answer-" value="X" th:attr="checked=${dto.answer eq 'x'}, disabled=${dto.answer eq 'o'}">
+                                        <label th:for="'chk-x-' + ${iterStat.index + 1}" class="radio-label-x">
+                                            <i class="ic-x"></i>
+                                            <span class="for-a11y">X</span>
+                                            <span class="desc">[[${dto.xcomment}]]</span>
+                                        </label>
+                                    </span>
+                                </div>
+                            <!--e: OX 문제-->
+
+
+                            <!--s: 초성 문제-->
+                                <div class="answer-group" th:if="${dto.category eq 'blank'}">
+                                    <input type="hidden" th:value="${dto.blank}" id="blanksValue">
+                                    <div class="blank-quiz">
+                                    </div>
+                                </div>
+                            <!--e: 초성 문제-->
+
+
+                            <!--s: 주관식 문제-->
+                                <div class="answer-group" th:if="${dto.category eq 'short'}">
+                                    <dl class="answer-item">
+                                        <dt class="answer-title">정답</dt>
+                                        <dd class="answer-value"><span class="show-answer-container" style="">[[${dto.answer}]]</span></dd>
+                                    </dl>
+                                </div>
+                            <!--e: 주관식 문제-->
+
+                            <!--s: 서술형 문제-->
+                                <div class="answer-group" th:if="${dto.category eq 'desc'}">
+                                    <input type="hidden" id="minTextLength">
+                                    <div class="answer-item">
+                                        <textarea class="textarea-answer" name="answer" disabled="">[[${dto.answer}]]</textarea>
+                                    </div>
+                                </div>
+                            <!--e: 서술형 문제-->
+
+
+                            <!--s: 해설 -->
+                                <div class="answer-group">
+                                    <dl class="answer-item explain">
+                                        <dt class="answer-title">해설</dt>
+                                        <dd class="answer-value">
+                                            [[${dto.comment}]]
+                                        </dd>
+                                    </dl>
+                                </div>
+                            <!--e: 해설 -->
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-a-center">
+                <button type="button" class="btn-type-blue size-lg" onclick="goBack()">목록</button>
+                <script>
+                    // function goBack() {
+                    //     window.location.href = history.back();
+                    // }
+                    window.onload = function() {
+                        localStorage.setItem('previousPage', document.referrer);
+                    }
+                    function goBack() {
+                        // 로컬 스토리지에서 이전 페이지 URL을 가져옴
+                        var previousPage = localStorage.getItem('previousPage');
+                        if (previousPage) {
+                            location.href = previousPage;
+                        } else {
+                            location.href ='/main2';
+                        }
+                    }
+                </script>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+<script type="text/javascript">
+
+</script>
+<script layout:fragment="script" th:inline="javascript">
+
+    //키워드 스크립트
+    let keywords;
+    let keywordsValue = document.getElementById("keywordsValue");
+    if (keywordsValue != null) {
+        keywords = keywordsValue.value.split(',');
+        for (let i = 0; i < keywords.length; i++) {
+            $("#keyword-group").append(`
+                                   <span class="keyword-item">${keywords[i]}</span>
+                                                            `);
+        }
+    }
+
+
+    //초성 스크립트
+    let blanks;
+    let blanksValue = document.getElementById("blanksValue");
+    if (blanksValue != null) {
+        blanks = blanksValue.value.split('');
+
+        for (let i = 0; i < blanks.length; i++) {
+            $("#blank-group").append(`
+                <div class="blank-item">${blanks[i]}</div>
+        `)
+        }
+    }
+
+    //객관식 스크립트
+    let multiQuestion;
+    let multiImg;
+    let mul_question = document.getElementById("mul_question");
+    let answer = document.getElementById("mul_answer").value;
+
+    if (mul_question != null) {
+        multiQuestion = mul_question.value.split(',');
+    }
+    for (let i = 0; i < multiQuestion.length; i++) {
+        let isChecked = multiQuestion[i].trim() == answer.trim() ? 'checked' : 'disabled';
+
+        $("#choice-group").append(`
+                   <span class="choice-item" id="choice-item">
+                   <input type="radio" class="choice-form" id="choice${i}" name="answerCB" value="${multiQuestion[i]}" ${isChecked}>
+                   <label for="choice${i}" class="choice-label"><span class="number">${i + 1}.</span> ${multiQuestion[i]}</label>
+                   </span>
+        `);
+    }
+
+    //찜하기
+    function insertLike(quizIdx){
+        let memberId = [[${session.id}]];
+        console.log(memberId);
+        if (memberId == null) {
+            alert("로그인 해주세요");
+        } else {
+            $.ajax({
+                type: "POST",            // HTTP method type(GET, POST) 형식입니다.
+                url: "/insertLike",      // 컨트롤러에서 대기중인 URL 주소입니다.
+                data: {
+                    quizIdx: quizIdx
+                },            // Json 형식의 데이터입니다.
+                success: function (result) { // 비동기 통신의 성공일 경우 success 콜백으로 들어옵니다. 'result'는 응답받은 데이터입니다.
+                    console.log(result);
+                    let elem = document.getElementById("zzim" + quizIdx);
+                    let likeText = document.getElementById("likeCntText");
+
+                    likeText.innerText = result;
+                    if (elem.classList.contains("ic-like")) {
+                        elem.classList.remove("ic-like");
+                        elem.classList.add("ic-like-off");
+                    } else {
+                        elem.classList.remove("ic-like-off");
+                        elem.classList.add("ic-like");
+                    }
+                },
+                error: function (error) { // 비동기 통신이 실패할 경우 error 콜백으로 들어옵니다.
+                    console.log(error);
+                }
+            });
+        }
+
+    }
+
+    function togetherSetting(num){
+        const name = document.querySelector("#name").value;
+        console.log(num + ":::" + name);
+        let popupUrl = "/togetherSetting?name="+name+"&num="+num;
+
+        // 팝업 창 옵션 설정
+        let popupOption = "width=620,height=420,scrollbars=yes,resizable=yes";
+
+        // 팝업 창 열기
+        window.open(popupUrl, "", popupOption);
+    }
+
+</script>
+</html>

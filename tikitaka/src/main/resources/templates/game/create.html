@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나 즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery-ui.js"></script>
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <script src="/js/stomp.umd.min.js"></script>
+    <script src="/js/websocketTGamesStomp.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="/js/quizRendering.js"></script>
+</head>
+<body id="body">
+<div class="create-url-wrap">
+    <header class="content-header">
+        <div class="header-title">
+            <div class="title-label">
+                <span class="label-gray size-lg">초등</span>
+                <span class="label-worksheet size-lg">퀴즈 게임</span>
+            </div>
+            <h2 class="title">같이 게임을 해봅시다.</h2>
+        </div>
+    </header>
+    <main class="content-body">
+        <div class="create-group">
+            <div class="create-item">
+                <p class="title">URL</p>
+                <div class="create-form">
+                    <input id="url" type="text" class="inp-c" th:value="|localhost:8080/game/joingame?roomIdx=${quizRoomDTO.roomIdx}|">
+                    <button type="button" class="btn-type-red2" onclick="copyLink(this.value)" th:value="|localhost:8080/game/joingame?roomIdx=${quizRoomDTO.roomIdx}|">복사</button>
+                </div>
+            </div>
+            <div class="create-item">
+                <p class="title">입장코드</p>
+                <div class="create-form">
+                    <input id="roomIdx" type="text" class="inp-c" th:value="${quizRoomDTO.roomIdx}">
+                    <button type="button" class="btn-type-red2" onclick="copyLink(this.value)" th:value="${quizRoomDTO.roomIdx}">복사</button>
+                </div>
+            </div>
+            <p class="create-guide mt-m"><i class="ic-notice"></i>URL 주소를 브라우저에 입력하거나 입장하기 페이지에서 입장 코드를 입력하시면 입장이 가능합니다.</p>
+        </div>
+        <div class="user-list-group">
+            <div class="scroll-box">
+                <!-- S : user list -->
+                <div class="user-list" id="user-list">
+                    <!-- S : user item -->
+                </div>
+                <!-- E : user list -->
+                <p class="user-in-info">학생이 입장 중입니다</p>
+            </div>
+        </div>
+        <div class="body-btn">
+            <button onclick="startQuiz()" type="button" class="btn-type-dark"><span class="btn-txt">시작하기</span></button>
+        </div>
+        <input id="status" type="hidden" class="inp-c" th:value="${quizRoomDTO.status}">
+    </main>
+</div>
+</body>
+<script>
+    roomConnect();
+    let statusdom = document.getElementById("status");
+    if(statusdom!=null){
+        if(statusdom.value=="s"){
+            startQuiz();
+        }
+        else if(statusdom.value=="e"){
+            alert("해당 퀴즈는 종료되었습니다.");
+            window.location.href="/";
+        }
+    }
+</script>
+</html>

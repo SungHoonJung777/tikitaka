@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Title</title>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery-ui.js"></script>
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <!-- STOMP -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+<body>
+<div tabindex="-1" role="dialog" class="ui-dialog ui-corner-all ui-widget ui-widget-content ui-front basic-type dialog-grid-a ui-dialog-buttons ui-draggable ui-resizable" aria-describedby="ui-id-6" aria-labelledby="ui-id-7" style="position: absolute; height: 100%; width: 100%; z-index: 101;">
+    <div class="ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle">
+        <span id="ui-id-7" class="ui-dialog-title">같이하기</span>
+        <button type="button" class="ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close" title="Close">
+            <span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"> </span>Close
+        </button>
+    </div>
+    <div class="dialog-game ui-dialog-content ui-widget-content" id="ui-id-6" style="width: auto; min-height: 0px; max-height: none; height: auto;">
+
+        <form method="post" id="gameform" name="gameform" >
+            <input type="hidden" id="nickname" th:value="${name}">
+            <input type="hidden" id="roomIdx" th:value="${num}">
+            <div class="make-box">
+                <div class="box-flex">
+                    <div class="flag-list">
+                        <span class="flag-item gray">초등</span>
+                        <span class="flag-item orange">같이하기</span>
+                    </div>
+                    <input type="text" class="inp-a" name="title" placeholder="제목을 입력하세요" value="">
+                </div>
+            </div>
+
+            <div class="form-table">
+                <table>
+                    <colgroup>
+                        <col style="width:auto">
+                    </colgroup>
+                    <tbody>
+                    <tr>
+                        <th scope="row">같이하기</th>
+                        <td>
+                            <span class="desc">열심히 해보세요.</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">안내문구</th>
+                        <td>
+                            <textarea class="textarea-a" name="intro" placeholder="공유할 학생들에게 전달할 안내문구를 작성해보세요"></textarea>
+                        </td>
+                    </tr>
+                    <!--<tr>
+                        <th scope="row">옵션</th>
+                        <td>
+                            <div class="form-group">
+                                <span class="checkbox-a">
+                                    <input type="checkbox" class="checkbox-form" id="chk2-11">
+                                    <label class="checkbox-txt" for="chk2-11">재입장 가능</label>
+                                </span>
+                                    <span class="checkbox-a">
+                                        <input type="checkbox" class="checkbox-form" id="chk2-22">
+                                        <label class="checkbox-txt" for="chk2-22">점수표시</label>
+                                </span>
+                                    <span class="checkbox-a">
+                                        <input type="checkbox" class="checkbox-form" id="chk2-3">
+                                        <label class="checkbox-txt" for="chk2-3">해설노출</label>
+                                </span>
+                                <input type="hidden"  id="type" name="type" value="together">
+                            </div>
+                        </td>
+                    </tr>-->
+                    </tbody>
+                </table>
+            </div>
+            <div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix">
+                <div class="ui-dialog-buttonset">
+                    <button type="button" id="startBtn" class="ui-button ui-corner-all ui-widget">URL 생성 </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    document.querySelector("#startBtn").addEventListener("click", function () {
+        const roomName = document.querySelector(".inp-a").value;
+        const nickname = document.querySelector("#nickname").value;
+        const roomIdx = document.querySelector("#roomIdx").value;
+        let code = Math.floor(100000 + Math.random() * 900000);
+        let popupUrl = "/start?roomName=" + roomName + "&nickname=" + nickname + "&code=" + code + "&roomIdx=" + roomIdx;
+
+        // 팝업 창 옵션 설정
+        let popupOption = "width=1920,height=1080,scrollbars=yes,resizable=yes";
+
+        // 팝업 창 열기
+        window.open(popupUrl, "", popupOption);
+
+        // 현재 창 닫기
+        window.close();
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko"  xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <meta charset="utf-8">
+    <title>필통</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="keywords" content="T셀파, 필통"/>
+    <meta name="description" content="온라인에서도 오프라인에서도, 디바이스만 있다면 누구나 즐겁게 수업에 참여할 수 있는 소통 도구 필통을 만나보세요."/>
+    <script th:src="@{/js/jquery.js}"></script>
+    <script th:src="@{/js/jquery-ui.js}"></script>
+    <script th:src="@{/js/swiper-bundle.min.js}"></script>
+
+
+    <link rel="stylesheet" th:href="@{/css/jquery-ui.css}">
+    <link rel="stylesheet" th:href="@{/css/swiper-bundle.min.css}" />
+    <link rel="stylesheet" th:href="@{/css/base.css}">
+    <link rel="stylesheet" th:href="@{/css/student.css}">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <!-- STOMP -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+<body>
+<div class="wrap" id="nameForm">
+    <header class="header">
+        <div class="header-title">
+            <div class="title-group">과제</div>
+            <h2 class="title">같이 학습지를 풀어봅시다</h2>
+        </div>
+    </header>
+    <main class="go-in-content">
+        <div class="content-label">
+            <span class="label-gray">초등</span>
+            <span class="label-quiz">퀴즈</span>
+        </div>
+        <div class="go-in-form">
+            <div class="form-group">
+                <div class="form-title">
+                    <i class="ic-children"></i>
+                    <h3 class="title">나도 참여할래요.</h3>
+                </div>
+                <div class="form-item">
+                    <div class="input-wrap">
+                        <label for="input-name" class="input-label-icon"><i class="ic-name"></i></label>
+                        <input type="text" id="input-name" class="input-line" placeholder="이름">
+                    </div>
+                    <p class="error-text" style="display: none;">
+                        <i class="ic-warning"></i>
+                        사용 중이에요. 다른 이름을 넣어주세요
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+        <div class="form-btn">
+            <button type="button" class="btn-type-black" id="startBtn"><span class="btn-txt">시작하기</span></button>
+        </div>
+        <input  id="roomNumber" type="hidden" th:value="${roomNumber}"/>
+    </main>
+</div>
+<div class="wrap" id="chareterForm" style="display: none;">
+    <header class="header">
+        <div class="header-title">
+            <div class="title-group">같이하기</div>
+            <h2 class="title">같이 학습지를 풀어봅시다</h2>
+        </div>
+    </header>
+    <main class="content-area ready">
+        <p class="ready-txt3">어떤 친구로 참여할까요?</p>
+        <div class="character-list">
+            <div class="character-group">
+                <p class="character-name">부지런한 <span class="name">버리</span></p>
+                <div class="character-item color1">
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character1-1">
+                        <label for="character1-1"><img src="../../images/character/character1-1.png" alt=""></label>
+                    </div>
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character1-2">
+                        <label for="character1-2"><img src="../../images/character/character1-2.png" alt=""></label>
+                    </div>
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character1-3">
+                        <label for="character1-3"><img src="../../images/character/character1-3.png" alt=""></label>
+                    </div>
+                </div>
+            </div>
+            <div class="character-group">
+                <p class="character-name">박학다식한 <span class="name">도기</span></p>
+                <div class="character-item color2">
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character2-1">
+                        <label for="character2-1"><img src="../../images/character/character2-1.png" alt=""></label>
+                    </div>
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character2-2">
+                        <label for="character2-2"><img src="../../images/character/character2-2.png" alt=""></label>
+                    </div>
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character2-3">
+                        <label for="character2-3"><img src="../../images/character/character2-3.png" alt=""></label>
+                    </div>
+                </div>
+            </div>
+            <div class="character-group">
+                <p class="character-name">야무진 <span class="name">냥이</span></p>
+                <div class="character-item color3">
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character3-1">
+                        <label for="character3-1"><img src="../../images/character/character3-1.png" alt=""></label>
+                    </div>
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character3-2">
+                        <label for="character3-2"><img src="../../images/character/character3-2.png" alt=""></label>
+                    </div>
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character3-3">
+                        <label for="character3-3"><img src="../../images/character/character3-3.png" alt=""></label>
+                    </div>
+                </div>
+            </div>
+            <div class="character-group">
+                <p class="character-name">수줍음이 많은 <span class="name">토리</span></p>
+                <div class="character-item color4">
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character4-1">
+                        <label for="character4-1"><img src="../../images/character/character4-1.png" alt=""></label>
+                    </div>
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character4-2">
+                        <label for="character4-2"><img src="../../images/character/character4-2.png" alt=""></label>
+                    </div>
+                    <div class="character-choice">
+                        <input type="radio" class="character-radio" name="characterChoice" id="character4-3">
+                        <label for="character4-3"><img src="../../images/character/character4-3.png" alt=""></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="btn-a-center">
+            <button type="button" class="btn-type-black" id="choiceBtn">골랐어요!</button>
+        </div>
+    </main>
+</div>
+
+<script>
+    document.querySelector("#startBtn").addEventListener("click",function (){
+        const nickname = document.querySelector("#input-name").value;
+        console.log("dd" + nickname );
+        if(nickname == ""){
+            swal({
+                title: "이름 또는 닉네임",
+                text: "공백없이 입력해주세요.",
+                icon: "warning",
+                button: "확인",
+                allowOutsideClick: false,
+                closeOnClickOutside: false,
+                closeOnEsc: false,
+            })
+        } else {
+            document.querySelector("#nameForm").style.display = 'none';
+            document.querySelector("#chareterForm").style.display = 'block';
+        }
+
+    })
+    document.querySelector("#choiceBtn").addEventListener("click",function (){
+        const nickname = document.querySelector("#input-name").value;
+        const roomNumber = document.querySelector("#roomNumber").value;
+        const selectedId = $("input[name='characterChoice']:checked").attr("id");
+        console.log("dd" + selectedId );
+        if(selectedId == null || selectedId === ""){
+            swal({
+                title: "캐릭터 선택",
+                text: "캐릭터를 선택해주세요.",
+                icon: "warning",
+                button: "확인",
+                allowOutsideClick: false,
+                closeOnClickOutside: false,
+                closeOnEsc: false,
+            })
+        } else {
+            $.ajax({
+                url: "/roomStatusCheck",
+                type: "GET",
+                data: { roomNumber: roomNumber },
+                success: function(response) {
+                    if (response === 'g') {
+                        alert("이미 같이하기가 진행중입니다.");
+                        window.close();
+                    } else if (response === 's') {
+                        location.href = "/ready?nickname=" + nickname +"&roomNumber=" + roomNumber + "&character=" + selectedId;
+                    } else {
+                        alert("이미 종료된 방입니다.");
+                        window.close();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching room status:', status, error);
+                }
+            });
+
+
+
+        }
+
+    })
+</script>
+</body>
+</html>

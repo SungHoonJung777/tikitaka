@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ko" layout:decorate="~{layout.html}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<th:block layout:fragment="headScript">
+    <script>
+        $(function () {
+            $(".select-a.size-lg select").selectmenu({
+                classes: {
+                    "ui-selectmenu-menu": "size-lg"
+                }
+            });
+            $(".select-a select").selectmenu();
+
+            $(".dialog-preview").dialog({
+                autoOpen: false,
+                dialogClass: "basic-type dialog-grid-c",
+                width: 1240,
+                modal: true,
+                resizable: true
+            });
+            $(".open-dialog-preview").click(function (event) {
+                $(".dialog-preview").dialog("open");
+                event.preventDefault();
+            });
+
+            $(".dialog-grade").dialog({
+                autoOpen: false,
+                dialogClass: "basic-type dialog-grid-a",
+                width: 573,
+                modal: true,
+                resizable: true,
+                buttons: [
+                    {
+                        text: "완료"
+                    }
+                ]
+            });
+            $(".open-dialog-grade").click(function (event) {
+                $(".dialog-grade").dialog("open");
+                event.preventDefault();
+            });
+        });
+    </script>
+</th:block>
+
+<th:block layout:fragment="content">
+    <div class="wrap">
+        <main class="create-area">
+            <div class="content-container">
+                <div class="create-header-group">
+                    <div class="create-header-col">
+                        <button class="btn-type-dark" onclick="window.location.href='/'" type="button">
+                            <i class="ic-close"></i>
+                            <span class="btn-txt">닫기</span>
+                        </button>
+                        <button class="btn-type-dark" onclick="window.location.href='/quiz/maker'" type="button">
+                            <i class="ic-prev"></i>
+                            <span class="btn-txt">이전단계</span>
+                        </button>
+                    </div>
+                    <div class="create-header-col">
+<!--                        <button class="btn-type-dark" onclick="viewAll()" type="button">-->
+<!--                            <i class="ic-preview2"></i>-->
+<!--                            <span class="btn-txt">미리보기</span>-->
+<!--                        </button>-->
+                        <button class="btn-type-dark" type="button" id="tmpSaveBtn">
+                            <i class="ic-temp"></i>
+                            <span class="btn-txt">임시저장</span>
+                        </button>
+                        <button class="btn-type-dark" type="button" id="saveQuizBtn">
+                            <i class="ic-folder"></i>
+                            <span class="btn-txt">저장</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="editor-wrap">
+                    <div class="editor-title-bar">
+                        <div class="editor-title">
+                            <span class="label-quiz">퀴즈</span>
+                            <p class="title">[[${session.title}]]</p>
+                        </div>
+                        <div class="btn-area">
+                            <div class="tool-group">
+                                <button class="btn-tool-b" type="button">
+                                    <span class="btn-txt">점수</span>
+                                </button>
+                            </div>
+                            <div class="grade-info">
+                                <span class="grade-item" id="totalCount"><strong class="num">1</strong>개</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!--                    <div id="standardFrame0">-->
+                    <div class="editor-frame">
+                        <div class="editor-tool-bar tool-quiz">
+                            <div class="tool-group">
+                                <button class="btn-tool-a selected" id="OXButton" name="type"
+                                        onclick="typeChange('OX', 'resetFormArea0')" type="button"
+                                        value="OX">
+                                    <i class="ic-ox"></i>
+                                    <span class="for-a11y">O/X</span>
+                                    <div class="tooltip">
+                                        <p class="tooltip-text">O/X 퀴즈 생성</p>
+                                    </div>
+                                </button>
+                                <button class="btn-tool-b" name="type"
+                                        onclick="typeChange('Multiple', 'resetFormArea0')" type="button"
+                                        value="Multiple">
+                                    <span class="btn-txt">객관식</span>
+                                </button>
+                                <button class="btn-tool-b" name="type" onclick="typeChange('Short','resetFormArea0')"
+                                        type="button"
+                                        value="Short">
+                                    <span class="btn-txt">주관식</span>
+                                </button>
+                                <button class="btn-tool-b" name="type" onclick="typeChange('Blank', 'resetFormArea0')"
+                                        type="button"
+                                        value="Blank">
+                                    <span class="btn-txt">빈칸형</span>
+                                </button>
+                                <button class="btn-tool-b" name="type"
+                                        onclick="typeChange('Description', 'resetFormArea0')" type="button"
+                                        value="Description">
+                                    <span class="btn-txt">서술형</span>
+                                </button>
+                            </div>
+<!--                            <div class="tool-group">-->
+<!--                                <button class="btn-tool-a" type="button">-->
+<!--                                    <i class="ic-copy"></i>-->
+<!--                                    <span class="for-a11y">항목복사</span>-->
+<!--                                </button>-->
+<!--                                <button class="btn-tool-a" type="button" id="delBtn">-->
+<!--                                    <i class="ic-trash"></i>-->
+<!--                                    <span class="for-a11y">항목삭제</span>-->
+<!--                                </button>-->
+<!--                            </div>-->
+                        </div>
+                        <div class="editor-pagination">
+                            <div class="pagination-box">
+                                <div class="page-box">
+                                    <span class="page-checkbox current" id="numBtn1">
+                                        <input class="page-form" id="chk01" name="clickedItem" type="checkbox">
+                                        <label class="page-label" for="chk01" order="1">1</label>
+                                        <input class="clickedQuiz" type="hidden">
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="btn-plus-box">
+                                <button class="btn-plus" id="selectNewQuiz" onclick="newQuiz()" type="button">
+                                    <i class="ic-plus"></i>
+                                    <span class="for-a11y">추가</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="editor-box">
+                            <div class="editor-form-area">
+                                <form id="resetBoard">
+                                <div id="questionArea">
+                                    <div class="editor-form-box" data-id="0">
+                                        <div class="editor-form-group" style="margin-bottom : 10px">
+                                            <div class="editor-form-item">
+                                                <div class="editor-label">
+                                                    <span class="editor-label-item">질문<em class="essential"></em></span>
+                                                    <button class="btn-icon open-dialog-media" onclick="questionMediaUpload()"
+                                                            type="button">
+                                                        <i class="ic-attach-b"></i>
+                                                        <span class="for-a11y">음원, 미디어파일 추가</span>
+                                                    </button>
+                                                    <button class="btn-icon" onclick="questionYoutubeUpload()"
+                                                            type="button">
+                                                        <i class="ic-attach-a"></i>
+                                                        <span class="for-a11y">음원, 미디어파일 추가</span>
+                                                    </button>
+                                                    <p class="editor-label-guide">* 이미지 아이콘을 통해 질문에 미디어를 첨부할 수 있어요.</p>
+                                                </div>
+                                                <div class="editor-form">
+                                                    <input class="inp-a size-lg" id="question" placeholder="Q. 질문을 입력해 주세요." type="text">
+                                                </div>
+                                            </div>
+                                            <div class="editor-form-item opt-item">
+                                                <div class="editor-label">
+                                                    <span class="editor-label-item">옵션<em class="essential"></em></span>
+                                                </div>
+                                                <div class="editor-form">
+                                                    <div class="editor-form-col">
+                                                        <div class="select-input" id="time">
+                                                            <div class="select-a size-lg">
+                                                                <select id="ui-id-1" name="timeSelect">
+                                                                    <option value="0">없음</option>
+                                                                    <option value="5">5초</option>
+                                                                    <option value="10">10초</option>
+                                                                    <option value="15">15초</option>
+                                                                    <option value="20">20초</option>
+                                                                    <option value="25">25초</option>
+                                                                    <option value="30">30초</option>
+                                                                    <option value="custom">직접입력</option>
+                                                                </select>
+                                                            </div>
+                                                            <input class="inp-a size-lg" id="selfTime"
+                                                                   placeholder="숫자+enter" style="display: none;" type="text">
+                                                            <span id="checkTime"></span>
+                                                        </div>
+                                                        <div class="select-input" id="scoreSelection">
+                                                            <div class="select-a size-lg">
+                                                                <select id="setScore" name="scoreSet">
+                                                                    <option value="0">없음</option>
+                                                                    <option value="5">5점</option>
+                                                                    <option selected value="10">10점</option>
+                                                                    <option value="15">15점</option>
+                                                                    <option value="custom">직접입력</option>
+                                                                </select>
+                                                            </div>
+                                                            <input class="inp-a size-lg" id="selfScore"
+                                                                   placeholder="숫자+enter" style="display:none;" type="text">
+                                                            <span id="checkScore"></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="media">
+                                        </div>
+                                    </div>
+
+                                            <div id="OXForm">
+                                                <div class="editor-form-group">
+                                                    <div class="ox-area">
+                                                        <div class="ox-item-o">
+                                                            <i class="ic-o"></i>
+                                                            <input class="inp-a size-lg" id="o-comment"
+                                                                   name="o-comment" placeholder="설명 입력 (선택)" type="text">
+                                                            <span class="checkbox-a">
+                                                            <input checked class="checkbox-form" id="chk-o"
+                                                                   name="answer" value="o"
+                                                                   type="radio">
+                                                            <label class="for-a11y" for="chk-o">선택</label>
+                                                        </span>
+                                                        </div>
+                                                        <div class="ox-item-x">
+                                                            <i class="ic-x"></i>
+                                                            <input class="inp-a size-lg" id="x-comment"
+                                                                   name="x-comment0" placeholder="설명 입력 (선택)" type="text">
+                                                            <span class="checkbox-a">
+                                                            <input class="checkbox-form" id="chk-x" name="answer" value="x"
+                                                                   type="radio">
+                                                            <label class="for-a11y" for="chk-x">선택</label>
+                                                        </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <div id="MultipleForm" style="display:none;">
+                                            <div class="editor-form-group">
+                                                <div class="choice-area">
+                                                    <div id="MultipleAnswerForm">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="btn-b-center">
+                                                <button class="btn-type-blue" onclick=addMultipleBox() type="button">추가
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="ShortForm" style="display:none;">
+                                            <div class="editor-form-group mt-s">
+                                                <div class="short-answer-area">
+                                                    <div class="editor-form">
+                                                        <input class="inp-a size-lg"
+                                                               id="shortFormAnswer"
+                                                               name="answer"
+                                                               placeholder="A. 엔터키로 최대 10개까지 복수정답을 입력할 수 있습니다." type="text">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="keyword-group mt-30" id="answerList"></div>
+                                        </div>
+                                        <div id="BlankForm" style="display:none;">
+                                            <div class="editor-form-group mt-s">
+                                                <div class="editor-form-item">
+                                                    <div class="editor-form"><input class="inp-a size-lg" placeholder="A. 정답을 입력해 주세요."
+                                                                                    id="blankAnswer" type="text"></div>
+                                                </div>
+                                            </div>
+                                            <div class="editor-form-group mt-m">
+                                                <div class="editor-form-item">
+                                                    <div class="editor-label">
+                                                        <span class="editor-label-item-sm"><strong>*빈칸</strong> (빈칸에 초성 등을 직접 입력할 수 있습니다.) </span>
+                                                    </div>
+                                                    <div class="editor-form-blank" id="hintBoxes">
+                                                        <button class="btn-blank-add" onclick="addHint()" type="button">
+                                                            <i class="ic-blank-add"></i>
+                                                            <span class="for-a11y">빈칸 추가</span>
+                                                        </button>
+                                                        <div class="editor-form">
+                                                            <input class="inp-a" maxlength="1" type="text">
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="DescriptionForm" style="display:none;">
+                                            <span class="fc-red">* 서술형은 채점대상에 포함되지 않습니다.</span>
+                                            <div class="editor-form-group mt-s">
+                                                <div class="editor-form-item">
+                                                    <div class="editor-form"><input class="inp-a size-lg"
+                                                                                    id="descAnswer"
+                                                                                    placeholder="A. 예시답안을 입력해주세요." type="text">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="checkbox-a has-ip">
+                                                <input class="checkbox-form" id="chk100-min-description" name="minLengthYn"
+                                                       type="checkbox">
+                                                <label class="checkbox-txt"
+                                                       for="chk100-min-description">최소 작성 글자 수</label>
+                                                <input class="ip-num" disabled name="minTextLength" type="number"
+                                                       input="minTextLength" value="0"> 자
+                                            </span>
+                                        </div>
+                                        <div class="editor-form-group">
+                                            <div class="editor-form-item">
+                                                <div class="editor-label">
+                                                    <span class="editor-label-item">해설</span>
+                                                </div>
+                                                <div class="editor-form"><textarea class="textarea-a size-lg" id="comment"
+                                                                                   placeholder="해설 내용을 입력해 주세요. (선택)"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                </div>
+                                    </form>
+                            </div>
+                            <!--                        </form>-->
+                        </div>
+                    </div>
+                    <!--                    </div>-->
+                </div>
+            </div>
+                                    <form id="saveForm" method="post" name="saveForm" enctype="multipart/form-data">
+                                        <input name="quizIdx" type="hidden" th:value="${param.quizIdx}">
+                                        <input id="timeOption" name="timer" type="hidden" value="">
+                                        <input id="type" name="category" class="btn-tool-b"  type="hidden" value="">
+                                        <input id="saveQuestion" name="question" type="hidden" value="">
+                                        <input id="optionText" name="mulTitle" type="hidden" value="">
+                                        <input id="order" name="orders" type="hidden" value="">
+                                        <input id="answerCount" name="answerCount" type="hidden" value="">
+                                        <input id="multiChoice" name="multiChoice" type="hidden" value="">
+                                        <input id="getComment" name="comment" type="hidden">
+                                        <input id="get-O-Comment" name="ocomment" type="hidden">
+                                        <input id="get-X-Comment" name="xcomment" type="hidden">
+                                        <input id="getScore" name="score" type="hidden">
+                                        <input id="saveAnswer" name="answer" type="hidden" value="">
+                                        <input id="hint" name="blank" type="hidden" value="">
+                                        <input id="quizOptionFileIdx" name="quizFileIndex" type="hidden" value="">
+                                        <input id="minTextLength" name="descMin" type="hidden" value="">
+                                    </form>
+<!--                                </div>-->
+<!--                                &lt;!&ndash;                        </form>&ndash;&gt;-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        &lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--                    </div>-->
+<!--                </div>-->vlaue-O
+<!--            </div>-->
+
+        </main>
+    </div>
+
+    <!-- S : 미리보기 -->
+<!--    <div class="dialog-preview" title="퀴즈 미리보기">-->
+<!--        <div class="preview-header-group">-->
+<!--            <div class="preview-header-left">-->
+<!--                <span class="label-quiz">퀴즈(일반)</span>-->
+<!--                <span class="label-gray">초등</span>-->
+<!--                <p class="title">작성한 퀴즈 제목이 노출됩니다.</p>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="preview-box">-->
+<!--            퀴즈-->
+<!--        </div>-->
+<!--    </div>-->
+    <!-- E : 미리보기 -->
+
+
+    <div class="dialog-media" title="미디어 추가">
+        <form id="fileFo" name="fileFo">
+            <div class="form-table">
+                <table>
+                    <colgroup>
+                        <col style="width:100px">
+                        <col style="width:auto">
+                    </colgroup>
+                    <tbody>
+                    <tr>
+                        <th scope="row">직접 찾기</th>
+                        <td>
+                            <div class="btn-box">
+                                <button class="btn-type-blue size-sm" id="questionMedia" onclick="setMediaFile()"
+                                        type="button">
+                                    <span class="btn-txt">PC에서 등록하기</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <div class="read-file-group keyword-group" id="file-group" style="display: none;">
+                                <input type="file" id="fileMedia" name="file" style="display:none;">
+                            </div>
+                            <div class="keyword-group" style="justify-content: center;">
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+    <div class="dialog-youtube" title="유튜브 추가">
+        <div class="form-table">
+            <form id="youtubeFo" name="youtubeFo">
+                <table>
+                    <colgroup>
+                        <col style="width:100px">
+                        <col style="width:auto">
+                    </colgroup>
+                    <tbody>
+                    <tr>
+                        <th scope="row">URL 입력</th>
+                        <td>
+                            <input class="inp-a" id="questionYoutube" placeholder="첨부할 영상의 URL을 입력해주세요." type="text">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+
+    <div class="dialog-grade" title="점수 상세 설정">
+        <div class="gray-box-c">
+            <div class="form-group">
+                <div class="form-item">
+                    <div class="grade-input">
+                        <strong class="num">n</strong>문항 / <input class="inp-a w-55" type="text" value="100"> 점
+                    </div>
+                </div>
+                <div class="form-item">
+                    <span class="checkbox-a">
+                        <input class="checkbox-form" id="grade-auto" type="checkbox">
+                        <label class="checkbox-txt" for="grade-auto">점수 자동배분</label>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="dialog-title-a">문항별 점수</div>
+        <div class="list-table-a">
+            <table>
+                <colgroup>
+                    <col style="width:85px">
+                    <col style="width:85px">
+                    <col style="width:100px">
+                    <col style="width:auto">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">구분</th>
+                    <th scope="col">번호</th>
+                    <th scope="col">유형</th>
+                    <th scope="col">점수</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <span class="checkbox-a">
+                            <input class="checkbox-form" id="grade1" type="checkbox">
+                            <label class="for-a11y" for="grade1">선택</label>
+                        </span>
+                    </td>
+                    <td>1</td>
+                    <td>단일선택</td>
+                    <td>
+                        <div class="select-group">
+                            <div class="select-a w-70">
+                                <select>
+                                    <option selected>5</option>
+                                    <option>10</option>
+                                    <option>15</option>
+                                    <option>20</option>
+                                    <option>25</option>
+                                    <option>30</option>
+                                </select>
+                            </div>
+                            <div class="w-110">
+                                <input class="inp-a" placeholder="숫자입력" type="text">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="checkbox-a">
+                            <input class="checkbox-form" id="grade2" type="checkbox">
+                            <label class="for-a11y" for="grade2">선택</label>
+                        </span>
+                    </td>
+                    <td>2</td>
+                    <td>다중선택</td>
+                    <td>
+                        <div class="select-group">
+                            <div class="select-a w-70">
+                                <select>
+                                    <option selected>5</option>
+                                    <option>10</option>
+                                    <option>15</option>
+                                    <option>20</option>
+                                    <option>25</option>
+                                    <option>30</option>
+                                </select>
+                            </div>
+                            <div class="w-110">
+                                <input class="inp-a" placeholder="숫자입력" type="text">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="checkbox-a">
+                            <input class="checkbox-form" id="grade3" type="checkbox">
+                            <label class="for-a11y" for="grade3">선택</label>
+                        </span>
+                    </td>
+                    <td>3</td>
+                    <td>주관식</td>
+                    <td>
+                        <div class="select-group">
+                            <div class="select-a w-70">
+                                <select>
+                                    <option selected>5</option>
+                                    <option>10</option>
+                                    <option>15</option>
+                                    <option>20</option>
+                                    <option>25</option>
+                                    <option>30</option>
+                                </select>
+                            </div>
+                            <div class="w-110">
+                                <input class="inp-a" placeholder="숫자입력" type="text">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="checkbox-a">
+                            <input class="checkbox-form" id="grade4" type="checkbox">
+                            <label class="for-a11y" for="grade4">선택</label>
+                        </span>
+                    </td>
+                    <td>4</td>
+                    <td>선잇기</td>
+                    <td>
+                        <div class="select-group">
+                            <div class="select-a w-70">
+                                <select>
+                                    <option selected>5</option>
+                                    <option>10</option>
+                                    <option>15</option>
+                                    <option>20</option>
+                                    <option>25</option>
+                                    <option>30</option>
+                                </select>
+                            </div>
+                            <div class="w-110">
+                                <input class="inp-a" placeholder="숫자입력" type="text">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="checkbox-a">
+                            <input class="checkbox-form" id="grade5" type="checkbox">
+                            <label class="for-a11y" for="grade5">선택</label>
+                        </span>
+                    </td>
+                    <td>5</td>
+                    <td>단일선택</td>
+                    <td>
+                        <div class="select-group">
+                            <div class="select-a w-70">
+                                <select>
+                                    <option selected>5</option>
+                                    <option>10</option>
+                                    <option>15</option>
+                                    <option>20</option>
+                                    <option>25</option>
+                                    <option>30</option>
+                                </select>
+                            </div>
+                            <div class="w-110">
+                                <input class="inp-a" placeholder="숫자입력" type="text">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="checkbox-a">
+                            <input class="checkbox-form" id="grade-chk" type="checkbox">
+                            <label class="checkbox-txt" for="grade-chk">선택문항</label>
+                        </span>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <div class="select-group">
+                            <div class="select-a w-70">
+                                <select>
+                                    <option selected>5</option>
+                                    <option>10</option>
+                                    <option>15</option>
+                                    <option>20</option>
+                                    <option>25</option>
+                                    <option>30</option>
+                                </select>
+                            </div>
+                            <div class="w-110">
+                                <input class="inp-a" placeholder="숫자입력" type="text">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div title="미디어 추가" class="dialog-option-media">
+        <p class="editor-label-guide" style="color: tomato">*이미지 파일만 등록 가능합니다(jpg, png, bmp, jpeg).</p>
+        <div class="form-table">
+            <table>
+                <colgroup>
+                    <col style="width:100px">
+                    <col style="width:auto">
+                </colgroup>
+                <tbody>
+                <tr>
+                    <th scope="row">직접 찾기</th>
+                    <td>
+                        <div class="btn-box">
+                            <button type="button" class="btn-type-blue size-sm">
+                                <span class="btn-txt">PC에서 등록하기</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="keyword-group">
+                <div class="keyword-item">
+                    <span class="keyword-txt">워크시트_참고 이미지.JPG</span>
+                    <button type="button" class="btn-del">
+                        <i class="ic-keyword-del"></i>
+                        <span class="for-a11y">삭제</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        let quizIdx = /*[[${param.quizIdx}]]*/ 0;
+        let numArray = Array.from(quizIdx).filter(char => !isNaN(char)).join('');
+        let num = Number(numArray);
+        console.log(num);
+        document.getElementById('tmpSaveBtn').onclick = function() {
+            saveTemp(num);
+        };
+        document.getElementById("saveQuizBtn").onclick=function() {
+            window.location.href="/quiz/saveQuiz?quizIdx="+num;
+        }
+        // document.getElementById("delbtn").onclick=function() {
+        //     deleteQuizdetail(num);
+        // }
+
+        /*]]>*/
+    </script>
+    <script>
+        $(".pagination-toggle .btn-toggle").click(function () {
+            $(".editor-pagination").toggleClass("is-closed");
+        });
+        $(".dialog-preview").dialog({
+            autoOpen: false,
+            // dialogClass: "basic-type dialog-grid-a",
+            // width: 488,
+            modal: true,
+            resizable: true,
+            buttons: [
+                {
+                    text: "추가",
+                    click: function () {
+                        // $( this ).dialog( "close" );
+                        $('#file-group').css("display", "none");
+                        window['mediaInsert']();
+                    }
+                }
+            ],
+            close: function () {
+                $("input[name='title']").val("");
+            }
+        });
+        $(".dialog-media").dialog({
+            autoOpen: false,
+            dialogClass: "basic-type dialog-grid-a",
+            width: 488,
+            modal: true,
+            resizable: true,
+            buttons: [
+                {
+                    text: "추가",
+                    click: function () {
+                        $('#file-group').css("display", "none");
+                        window['mediaInsert']();
+                        questionMediaUpload();
+                        $( this ).dialog( "close" );
+                    }
+                }
+            ],
+            close: function () {
+                $("input[name='title']").val("");
+            }
+        });
+
+        $(".dialog-option-media").dialog({
+            autoOpen: false,
+            dialogClass: "basic-type dialog-grid-a",
+            width: 488,
+            modal: true,
+            resizable: true,
+            buttons: [
+                {
+                    text: "추가",
+                    click: function () {
+                        // $( this ).dialog( "close" );
+                        $('#file-group').css("display", "none");
+                        window['mediaInsert']();
+                        questionMediaUpload();
+                    }
+                }
+            ],
+            close: function () {
+                $("input[name='title']").val("");
+            }
+        });
+
+        $(".dialog-youtube").dialog({
+            autoOpen: false,
+            dialogClass: "basic-type dialog-grid-a",
+            width: 488,
+            modal: true,
+            resizable: true,
+            buttons: [
+                {
+                    text: "추가",
+                    click: function () {
+                        // $( this ).dialog( "close" );
+                        uploadYoutube();
+                    }
+                }
+            ],
+            close: function () {
+                $("input[name='title']").val("");
+            }
+        });
+
+        // 버튼 색 변경
+        function buttonColorChange(type) {
+            let findButton = document.getElementsByName('type');
+            // const questionBox = document.getElementById(id);
+            for (let buttonNum = 0; buttonNum < findButton.length; buttonNum++) {
+                if (type === 'OX') {
+                    document.getElementById('OXButton').className = 'btn-tool-a selected';
+                    findButton[buttonNum].className = 'btn-tool-b';
+                    // changeOXForm();
+                } else if (findButton[buttonNum].value === type) {
+                    findButton[buttonNum].className = 'btn-tool-b selected';
+                } else {
+                    document.getElementById('OXButton').className = 'btn-tool-a';
+                    findButton[buttonNum].className = 'btn-tool-b';
+                }
+            }
+            $('#type').val(type);
+        }
+
+        function typeChange(type) {
+
+            let quizId = $(".current").find(".clickedQuiz").value;
+            let originType = document.getElementById('type').value;
+            document.forms['resetBoard'].reset();
+
+            buttonColorChange(type);
+
+            $('input:radio[name=answer]').prop("checked", false);
+            $('.keyword-group').empty();
+
+            const formIds = ['#OXForm', '#MultipleForm', '#ShortForm', '#DescriptionForm', '#BlankForm'];
+            formIds.forEach((formId) => {
+                if (!formId.includes(originType)) {
+                    $(formId).find('.choice-item').remove();
+                }
+            });
+
+            const questionArea = $('#questionArea');
+            for (let i = 0; i < formIds.length; i++) {
+                $(formIds[i]).hide();
+                $('#questionArea').show();
+                // $('#scoreSelection').show();
+            }
+            switch (type) {
+                case 'OX':
+                    questionArea.show();
+                    $('#OXForm').show();
+                    break;
+                case 'Multiple':
+                    questionArea.show();
+                    $('#MultipleForm').show();
+
+                    let MultipleForm = document.getElementById('MultipleForm');
+                    let checkValue = MultipleForm.querySelectorAll('[name=option]');
+
+                    if (checkValue.length > 0) {
+                        $('#MultipleAnswerForm').empty();
+                    }
+                    addMultipleBox();
+
+                    break;
+                case 'Short':
+                    questionArea.show();
+                    $('#ShortForm').show();
+
+                    break;
+                case 'Description':
+                    // $('#scoreSelection').hide();
+                    $('#setScore').hide();
+                    questionArea.show();
+                    $('#DescriptionForm').show();
+                    // const minLengthTextBox = $('#DescriptionForm').find('input[name="minTextLength"]');
+                    // minLengthTextBox[0].disabled = true;
+
+                    break;
+                case 'Blank':
+                    questionArea.show();
+                    $('#BlankForm').show();
+                    let deleteBoxes = document.getElementById('hintBoxes');
+                    let checkEditorForm = deleteBoxes.querySelectorAll('.editor-form');
+
+                    if (checkEditorForm) {
+                        if (checkEditorForm.length > 0) {
+                            checkEditorForm.forEach(function (checkEditorForm) {
+                                checkEditorForm.remove();
+                            });
+
+                            let html = '';
+                            html += '<div class="editor-form">';
+                            html += '<input type="text" class="inp-a" name="getHint" maxlength="1">';
+                            html += '</button>';
+                            html += '</div>';
+
+                            $('#hintBoxes').append(html);
+
+                        } else {
+                            let html = '';
+                            html += '<div class="editor-form">';
+                            html += '<input type="text" class="inp-a" name="getHint" maxlength="1">';
+                            html += '</button>';
+                            html += '</div>';
+
+                            $('#hintBoxes').append(html);
+                        }
+                        break;
+                    }
+            }
+        }
+
+        // 주관식
+        function shortAnswerRender(answer) {
+
+            let html = '';
+            html += '<div class="keyword-item">';
+            html += '<span class = "keyword-txt">' + answer + '</span>';
+            html += '<button type="button" class ="btn-del" onclick= "deleteAnswer(this)">';
+            html += '        <i class="ic-keyword-del"></i>';
+            html += '        <span class="for-a11y"></span>';
+            html += '</button>';
+            html += '</div>';
+            return html;
+        }
+
+        function deleteAnswer(data) {
+            const parent = $(data).parent();
+            parent.remove();
+        }
+
+        // function insertShortAnswer() {
+        let array = [];
+        const shortForm = document.getElementById('ShortForm');
+        const shortFormAnswer = shortForm.querySelectorAll('[name=answer]') != null ? shortForm.querySelectorAll('[name=answer]') : "";
+        shortFormAnswer.forEach(function (shortFormAnswer) {
+                shortFormAnswer.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") {
+                        // e.preventDefault();
+                        let answer = shortFormAnswer.value;
+                        if (answer.trim().length === 0) {
+                            alert('정답 텍스트를 입력해주세요.');
+                        } else {
+                            if (!answer.replace(/(^\s*)|(\s*$)/gi, "")) {
+
+                            }
+                            const answerCheck = $('#answerList').find('.keyword-item');
+                            if (answerCheck.length < 10) {
+                                $('#answerList').append(shortAnswerRender(answer));
+                            } else {
+                                alert("복수정답은 10개까지 등록 가능합니다.");
+                            }
+
+                            array.push(answer);
+                            shortFormAnswer.value = array;
+                            shortFormAnswer.value = "";
+
+                            $('#saveAnswer').val(array);
+                        }
+                    }
+                });
+            }
+        );
+        // }
+
+
+        //     서술형 체크 박스
+        const minLengthTextBox = $('#DescriptionForm').find('input[name="minTextLength"]');
+        const minLengthYn = $('#DescriptionForm').find('input:checkbox[name="minLengthYn"]');
+
+        $('#chk100-min-description').click(function () {
+            if (this.checked) {
+                minLengthYn.prop("checked", true);
+                minLengthTextBox[0].value = 10;
+                minLengthTextBox[0].disabled = false;
+            } else {
+                minLengthYn.prop("checked", false);
+                minLengthTextBox[0].value = 0;
+                minLengthTextBox[0].disabled = true;
+            }
+        });
+
+        function pageLoad() {
+            const pageCount = $('.pagination-box').find('.page-box');
+            const makerId = document.getElementById('makerId').value;
+
+            var result = sumScore(scores);
+            var totalNumber = '';
+            totalNumber += '<span class="grade-item" id="totalCount">';
+            totalNumber += '<strong class="num"> ' + response.quiz.length + '</strong>개 </span>';
+
+            $('.grade-info').append(totalNumber);
+
+        }
+        document.getElementById().addEventListener("click", (e)=> {
+        })
+
+
+    </script>
+    <script th:src="@{/js/makerD.js}"></script>
+
+</th:block>
+<!-- E : 점수 상세 설정 -->
+</html>

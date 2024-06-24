@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<main>
+    <h1>채팅방</h1>
+    <button class="new_chat">새 채팅방 만들기</button>
+    <nav>
+        <span>방 제목</span>
+        <span>인원</span>
+    </nav>
+    <hr>
+
+    <ul>
+        <li>
+            <!--
+				<span class="chat_title"></span>
+				<span class="chat_count"></span>
+				 -->
+        </li>
+    </ul>
+</main>
+    <h2>hi</h2>
+    <button class="registBtn" type="button">입장하기</button>
+    <button class="startBtn" type="button">url 생성</button>
+    <input id="roomName" type="text" value="같이 학습지를 풀어봅시다." readonly/>
+    <input id="nickname" type="text" value="김자옥" readonly>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <!-- STOMP -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script>
+
+
+        const socket = new SockJS('/websocket');
+        const stomp = Stomp.over(socket);
+        stomp.debug = null; // stomp 콘솔출력 X
+        const subscribe = [];
+        stomp.connect({}, function(frame){
+            console.log('Connected: ' + frame);
+            main();
+        });
+        // 메인 화면
+        const main = function() {
+            const subscribeId = stomp.subscribe("/topic/roomList", function(){
+                // "/topic/roomList"에서 메세지가 왔을때 실행할 함수
+                chatingRoomList();
+            });
+
+            subscribe.push(subscribeId);
+            chatingRoomList();
+        };
+
+        const listHtml = function(roomList) {
+            let listHtml = "";
+
+            for(let i=roomList.length-1;i>=0;i--) {
+                listHtml += `
+				<li data-room_number=${roomList[i].roomNumber}>
+                    <span class="chat_title">${roomList[i].roomName }</span>
+                    <span class="chat_count">${roomList[i].users.length}명</span>
+	            </li>`;
+            }
+            $("main ul").html(listHtml);
+        }
+
+
+        // 채팅방 목록 불러오기
+        const chatingRoomList = function(){
+            $.ajax({
+                url: "/chatingRoomList",
+                type: "GET",
+            })
+                .then(function(result){
+                    listHtml(result)
+                })
+                .fail(function(){
+                    alert("에러가 발생했습니다");
+                })
+        }
+        document.querySelector(".startBtn").addEventListener("click", function () {
+            const roomName = document.querySelector("#roomName").value;
+            const nickname = document.querySelector("#nickname").value;
+            let code = Math.floor(100000 + Math.random() * 900000);
+            let popupUrl = "/start?roomName="+roomName+"&nickname="+nickname
+            +"&code="+code;
+
+            // 팝업 창 옵션 설정
+            let popupOption = "width=1920,height=1080,scrollbars=yes,resizable=yes";
+
+            // 팝업 창 열기
+            window.open(popupUrl, "", popupOption);
+        });
+        document.querySelector(".registBtn").addEventListener("click", function () {
+
+
+            let popupUrl = "/regist";
+
+            // 팝업 창 옵션 설정
+            let popupOption = "width=1920,height=1080,scrollbars=yes,resizable=yes";
+
+            // 팝업 창 열기
+            window.open(popupUrl, "", popupOption);
+        });
+
+    </script>
+</body>
+
+</html>
